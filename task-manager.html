@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>月間タスク管理｜奈良</title>
+<style>
+  :root{
+    --bg: #12181c;
+    --panel: #1a2126;
+    --panel2: #212a30;
+    --line: #2b363c;
+    --ink: #eef2f0;
+    --sub: #93a3a6;
+    --gold: #d4a94c;
+    --gold-dim: #7a6a3a;
+    --green: #4caf7d;
+    --red: #d97066;
+    --uber: #4a90d9;
+    --eigyou: #9b7fd4;
+    --nomigo: #d4a94c;
+    --daily: #6b7a80;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Hiragino Sans", "Noto Sans JP", -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 60px;
+  }
+  header{
+    padding: 28px 20px 20px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #171f23, var(--bg));
+  }
+  .title-row{display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px;}
+  h1{
+    font-size: 22px;
+    margin:0;
+    letter-spacing: 0.02em;
+    font-weight: 700;
+  }
+  h1 .accent{color:var(--gold);}
+  .month-nav{display:flex; align-items:center; gap:10px; font-size:14px; color:var(--sub);}
+  .month-nav button{
+    background: var(--panel2); border:1px solid var(--line); color:var(--ink);
+    border-radius:8px; padding:6px 12px; font-size:15px; cursor:pointer;
+  }
+  .goal-strip{
+    display:flex; gap:10px; margin-top:18px; overflow-x:auto; padding-bottom:4px;
+  }
+  .goal-card{
+    flex: 1 1 0; min-width:130px;
+    background: var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px 14px;
+  }
+  .goal-card .label{font-size:11px; color:var(--sub); letter-spacing:0.03em;}
+  .goal-card .value{font-size:19px; font-weight:700; margin-top:4px;}
+  .goal-card.uber .value{color:var(--uber);}
+  .goal-card.eigyou .value{color:var(--eigyou);}
+  .goal-card.total .value{color:var(--gold);}
+  .goal-card .sub{font-size:11px; color:var(--sub); margin-top:2px;}
+  .goal-card .sub.remain{color:var(--red); font-weight:600;}
+  .goal-card .sub.remain.achieved{color:var(--green);}
+
+  main{padding: 18px 14px 40px; max-width: 720px; margin:0 auto;}
+
+  .day-block{
+    background: var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    margin-bottom:12px;
+    overflow:hidden;
+  }
+  .day-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 13px 16px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .day-head:active{background: var(--panel2);}
+  .day-head .left{display:flex; align-items:center; gap:10px;}
+  .day-num{
+    font-size:17px; font-weight:700;
+    width:38px; text-align:center;
+  }
+  .day-num.today{color: var(--gold);}
+  .day-weekday{font-size:11px; color:var(--sub); width:18px;}
+  .day-progress-ring{
+    width:30px; height:30px; flex-shrink:0;
+  }
+  .day-money{font-size:12px; color:var(--sub);}
+  .day-money b{color:var(--ink); font-weight:600;}
+  .chevron{color:var(--sub); font-size:13px; transition: transform 0.2s;}
+  .day-block.open .chevron{transform: rotate(90deg);}
+
+  .day-body{
+    display:none;
+    padding: 4px 16px 16px;
+    border-top:1px solid var(--line);
+  }
+  .day-block.open .day-body{display:block;}
+
+  .money-target{
+    display:flex; gap:8px; margin: 12px 0 14px;
+    font-size:12px;
+  }
+  .money-target span{
+    background: var(--panel2); border-radius:8px; padding:5px 10px; color:var(--sub);
+  }
+  .money-target b{color:var(--ink);}
+
+  .section-label{
+    font-size:11px; letter-spacing:0.06em; color:var(--sub);
+    margin: 14px 0 6px; display:flex; align-items:center; gap:6px;
+  }
+  .dot{width:7px; height:7px; border-radius:50%; display:inline-block;}
+  .dot.uber{background:var(--uber);}
+  .dot.eigyou{background:var(--eigyou);}
+  .dot.nomigo{background:var(--nomigo);}
+  .dot.daily{background:var(--daily);}
+
+  .task{
+    display:flex; align-items:flex-start; gap:10px;
+    padding: 9px 2px;
+    border-bottom: 1px solid #ffffff08;
+  }
+  .task:last-child{border-bottom:none;}
+  .task input[type=checkbox]{
+    appearance:none; -webkit-appearance:none;
+    width:20px; height:20px; min-width:20px;
+    border:1.5px solid var(--sub);
+    border-radius:6px;
+    margin-top:1px;
+    cursor:pointer;
+    position:relative;
+    background: transparent;
+  }
+  .task input[type=checkbox]:checked{
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .task input[type=checkbox]:checked::after{
+    content:"✓";
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-58%);
+    color:#0c1a12; font-size:13px; font-weight:700;
+  }
+  .task label{
+    font-size:14.5px; line-height:1.5; flex:1;
+    cursor:pointer;
+  }
+  .task.done label{color:var(--sub); text-decoration: line-through; text-decoration-color: #ffffff30;}
+
+  .record-row{
+    margin: 8px 0 4px;
+  }
+  .record-row.two-col{
+    display:flex; gap:10px;
+  }
+  .record-row.two-col > div{flex:1;}
+  .record-label{
+    font-size:12px; color:var(--sub); display:block; margin-bottom:4px;
+  }
+  .record-input{
+    width:100%; background: var(--panel2); border:1px solid var(--line);
+    border-radius:8px; padding:8px 10px; color:var(--ink); font-size:14px;
+  }
+  .record-hint{
+    font-size:11.5px; color:var(--sub); margin-top:6px;
+  }
+
+  .add-row{
+    display:flex; gap:8px; margin-top:8px;
+  }
+  .add-row input{
+    flex:1; background: var(--panel2); border:1px solid var(--line);
+    border-radius:8px; padding:8px 10px; color:var(--ink); font-size:13.5px;
+  }
+  .add-row select{
+    background: var(--panel2); border:1px solid var(--line);
+    border-radius:8px; padding:8px 8px; color:var(--ink); font-size:13px;
+  }
+  .add-row button{
+    background: var(--gold); border:none; color:#1a1305; font-weight:700;
+    border-radius:8px; padding:8px 14px; font-size:13.5px; cursor:pointer;
+  }
+
+  .day-progress-bar{
+    height:4px; background:var(--line); border-radius:2px; margin-top:8px; overflow:hidden;
+  }
+  .day-progress-fill{height:100%; background:var(--green); width:0%; transition:width 0.25s;}
+
+  .footer-note{
+    text-align:center; color:var(--sub); font-size:11.5px; margin-top:22px; line-height:1.7;
+  }
+
+  .reset-btn{
+    display:block; margin: 26px auto 0; background:transparent; border:1px solid var(--line);
+    color:var(--sub); font-size:12px; padding:8px 16px; border-radius:8px; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-row">
+    <h1>今月の<span class="accent">タスク</span>管理</h1>
+    <div class="month-nav">
+      <span id="monthLabel">2026年8月</span>
+    </div>
+  </div>
+  <div class="goal-strip">
+    <div class="goal-card uber">
+      <div class="label">Uber営業代行</div>
+      <div class="value">¥150,000</div>
+      <div class="sub">実績 <span id="uberActual">¥0</span></div>
+      <div class="sub remain">残り <span id="uberRemain">¥150,000</span></div>
+    </div>
+    <div class="goal-card eigyou">
+      <div class="label">営業代行(Store Uplifted)</div>
+      <div class="value">¥100,000</div>
+      <div class="sub">月13件アポ目標／実績 <span id="eigyouActual">0件・¥0</span></div>
+      <div class="sub remain">残り <span id="eigyouRemain">¥100,000</span></div>
+    </div>
+    <div class="goal-card total">
+      <div class="label">月間合計目標</div>
+      <div class="value">¥250,000</div>
+      <div class="sub">実績合計 <span id="totalActual">¥0</span></div>
+      <div class="sub remain">残り <span id="totalRemain">¥250,000</span></div>
+    </div>
+  </div>
+</header>
+
+<main id="dayList"></main>
+
+<div class="footer-note">
+  データはこの端末のブラウザ内に保存されます。<br>
+  タップで開閉、チェックでその日のタスク完了。
+</div>
+<button class="reset-btn" onclick="if(confirm('全てのチェックをリセットしますか？')){resetAll()}">全チェックをリセット</button>
+
+<script>
+const DAYS_IN_MONTH = 31;
+const MONTH_KEY = "2026-08";
+const UBER_DAILY = Math.round(150000/31);
+const EIGYOU_DAILY = Math.round(100000/31);
+
+// カテゴリ別デフォルトタスク（毎日共通のひな形）
+const DEFAULT_TASKS = {
+  daily: [
+    "起床・体調チェック・朝食",
+    "今日の売上目標を確認する",
+    "皿洗い",
+    "夜の振り返り・翌日タスク整理"
+  ],
+  uber: [
+    "Uber案件：当日の稼働/対応を実施",
+    "Uber案件：進捗・売上を記録"
+  ],
+  eigyou: [
+    "Store Uplifted：新規アプローチ（架電/DM/訪問）",
+    "Store Uplifted：既存見込み客フォロー"
+  ],
+  nomigo: [
+    "Nomi Go：ローンチ準備タスクを1つ進める（届出・登録・テスト等）"
+  ]
+};
+
+function loadData(){
+  const raw = localStorage.getItem("taskmgr_"+MONTH_KEY);
+  if(raw) return JSON.parse(raw);
+  const data = {};
+  for(let d=1; d<=DAYS_IN_MONTH; d++){
+    data[d] = {
+      tasks: [
+        ...DEFAULT_TASKS.daily.map(t=>({cat:"daily", text:t, done:false})),
+        ...DEFAULT_TASKS.uber.map(t=>({cat:"uber", text:t, done:false})),
+        ...DEFAULT_TASKS.eigyou.map(t=>({cat:"eigyou", text:t, done:false})),
+        ...DEFAULT_TASKS.nomigo.map(t=>({cat:"nomigo", text:t, done:false})),
+      ],
+      uberSales: "",
+      eigyouSelf: "",
+      eigyouTeam: ""
+    };
+  }
+  return data;
+}
+
+let data = loadData();
+
+function save(){
+  localStorage.setItem("taskmgr_"+MONTH_KEY, JSON.stringify(data));
+}
+
+function resetAll(){
+  localStorage.removeItem("taskmgr_"+MONTH_KEY);
+  data = loadData();
+  render();
+}
+
+const catMeta = {
+  daily: {label:"日常", dot:"daily"},
+  uber: {label:"Uber営業代行", dot:"uber"},
+  eigyou: {label:"営業代行 (Store Uplifted)", dot:"eigyou"},
+  nomigo: {label:"Nomi Go（ローンチ準備）", dot:"nomigo"}
+};
+
+const weekdayNames = ["日","月","火","水","木","金","土"];
+
+function render(){
+  const list = document.getElementById("dayList");
+  list.innerHTML = "";
+  const today = new Date();
+  const isThisMonth = (today.getFullYear()===2026 && today.getMonth()===7); // 8月=index7
+  const todayDate = today.getDate();
+
+  for(let d=1; d<=DAYS_IN_MONTH; d++){
+    const dayData = data[d];
+    const total = dayData.tasks.length;
+    const doneCount = dayData.tasks.filter(t=>t.done).length;
+    const pct = total ? Math.round(doneCount/total*100) : 0;
+
+    const dateObj = new Date(2026, 7, d);
+    const wd = weekdayNames[dateObj.getDay()];
+
+    const block = document.createElement("div");
+    block.className = "day-block";
+    block.id = "day-"+d;
+
+    const isToday = isThisMonth && d===todayDate;
+
+    block.innerHTML = `
+      <div class="day-head" onclick="toggleDay(${d})">
+        <div class="left">
+          <div class="day-num ${isToday?'today':''}">${d}</div>
+          <div class="day-weekday">${wd}</div>
+          <div>
+            <div class="day-money">Uber <b>¥${UBER_DAILY.toLocaleString()}</b> ／ 営業代行 <b>¥${EIGYOU_DAILY.toLocaleString()}</b></div>
+            <div class="day-progress-bar" style="width:140px;"><div class="day-progress-fill" style="width:${pct}%;"></div></div>
+          </div>
+        </div>
+        <div class="chevron">▶</div>
+      </div>
+      <div class="day-body" id="body-${d}">
+        ${renderTasksByCat(d, dayData.tasks)}
+        <div class="add-row">
+          <select id="newcat-${d}">
+            <option value="daily">日常</option>
+            <option value="uber">Uber</option>
+            <option value="eigyou">営業代行</option>
+            <option value="nomigo">Nomi Go</option>
+          </select>
+          <input type="text" id="newtask-${d}" placeholder="タスクを追加...">
+          <button onclick="addTask(${d})">追加</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(block);
+  }
+
+  updateSummary();
+}
+
+function updateSummary(){
+  let uberTotal = 0;
+  let eigyouSelfTotal = 0;
+  let eigyouTeamTotal = 0;
+  for(let d=1; d<=DAYS_IN_MONTH; d++){
+    uberTotal += parseInt(data[d].uberSales)||0;
+    eigyouSelfTotal += parseInt(data[d].eigyouSelf)||0;
+    eigyouTeamTotal += parseInt(data[d].eigyouTeam)||0;
+  }
+  const eigyouYen = eigyouSelfTotal*8000 + eigyouTeamTotal*3000;
+  const eigyouCount = eigyouSelfTotal + eigyouTeamTotal;
+
+  document.getElementById("uberActual").textContent = "¥"+uberTotal.toLocaleString();
+  document.getElementById("eigyouActual").textContent = eigyouCount+"件・¥"+eigyouYen.toLocaleString();
+  document.getElementById("totalActual").textContent = "¥"+(uberTotal+eigyouYen).toLocaleString();
+
+  setRemain("uberRemain", 150000, uberTotal);
+  setRemain("eigyouRemain", 100000, eigyouYen);
+  setRemain("totalRemain", 250000, uberTotal+eigyouYen);
+}
+
+function setRemain(id, goal, actual){
+  const remain = goal - actual;
+  const el = document.getElementById(id);
+  if(remain <= 0){
+    el.textContent = "目標達成 +¥"+Math.abs(remain).toLocaleString();
+    el.parentElement.classList.add("achieved");
+  } else {
+    el.textContent = "¥"+remain.toLocaleString();
+    el.parentElement.classList.remove("achieved");
+  }
+}
+
+function renderTasksByCat(d, tasks){
+  let html = "";
+  const dayData = data[d];
+  ["daily","uber","eigyou","nomigo"].forEach(cat=>{
+    const catTasks = tasks.map((t,i)=>({...t, idx:i})).filter(t=>t.cat===cat);
+    if(catTasks.length===0 && cat!=="uber" && cat!=="eigyou") return;
+    html += `<div class="section-label"><span class="dot ${catMeta[cat].dot}"></span>${catMeta[cat].label}</div>`;
+    catTasks.forEach(t=>{
+      html += `
+        <div class="task ${t.done?'done':''}">
+          <input type="checkbox" id="t-${d}-${t.idx}" ${t.done?'checked':''} onchange="toggleTask(${d}, ${t.idx})">
+          <label for="t-${d}-${t.idx}">${escapeHtml(t.text)}</label>
+        </div>
+      `;
+    });
+    if(cat==="uber"){
+      html += `
+        <div class="record-row">
+          <label class="record-label">当日のUber売上（円）</label>
+          <input type="number" inputmode="numeric" class="record-input" value="${dayData.uberSales}"
+            placeholder="例：5000" onchange="updateField(${d}, 'uberSales', this.value)">
+        </div>
+      `;
+    }
+    if(cat==="eigyou"){
+      html += `
+        <div class="record-row two-col">
+          <div>
+            <label class="record-label">自分の成約数（件）</label>
+            <input type="number" inputmode="numeric" class="record-input" value="${dayData.eigyouSelf}"
+              placeholder="例：1" onchange="updateField(${d}, 'eigyouSelf', this.value)">
+          </div>
+          <div>
+            <label class="record-label">下の人の成約数（件）</label>
+            <input type="number" inputmode="numeric" class="record-input" value="${dayData.eigyouTeam}"
+              placeholder="例：1" onchange="updateField(${d}, 'eigyouTeam', this.value)">
+          </div>
+        </div>
+        <div class="record-hint">当日の見込み金額：¥${calcEigyouYen(dayData).toLocaleString()}（自分8,000円×${dayData.eigyouSelf||0}＋下3,000円×${dayData.eigyouTeam||0}）</div>
+      `;
+    }
+  });
+  return html;
+}
+
+function calcEigyouYen(dayData){
+  const self = parseInt(dayData.eigyouSelf)||0;
+  const team = parseInt(dayData.eigyouTeam)||0;
+  return self*8000 + team*3000;
+}
+
+function updateField(d, field, value){
+  data[d][field] = value;
+  save();
+  render();
+  document.getElementById("day-"+d).classList.add("open");
+}
+
+function escapeHtml(str){
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function toggleDay(d){
+  const block = document.getElementById("day-"+d);
+  block.classList.toggle("open");
+}
+
+function toggleTask(d, idx){
+  data[d].tasks[idx].done = !data[d].tasks[idx].done;
+  save();
+  render();
+  // 再描画後も開いた状態を維持
+  document.getElementById("day-"+d).classList.add("open");
+}
+
+function addTask(d){
+  const input = document.getElementById("newtask-"+d);
+  const cat = document.getElementById("newcat-"+d).value;
+  const text = input.value.trim();
+  if(!text) return;
+  data[d].tasks.push({cat, text, done:false});
+  save();
+  render();
+  document.getElementById("day-"+d).classList.add("open");
+}
+
+render();
+</script>
+
+</body>
+</html>
