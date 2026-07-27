@@ -215,7 +215,7 @@
     text-align:center; color:#fff;
   }
   .pop-title{
-    font-size:27px; font-weight:800; letter-spacing:.02em; margin-bottom:7px;
+    font-size:24px; font-weight:800; letter-spacing:.02em; margin-bottom:7px;
     text-shadow:0 3px 16px rgba(0,0,0,.75);
     opacity:0; transform:translateY(16px) scale(.94);
     animation:riseIn .55s .24s cubic-bezier(.2,1.4,.4,1) forwards;
@@ -701,7 +701,7 @@ async function toggleTask(id, d){
 const HALF_MSG = [
   "半分きたよ！",
   "いい調子！",
-  "折り返し！",
+  "折り返しだよ",
   "もうちょっと！"
 ];
 const HALF_SUB = [
@@ -714,7 +714,7 @@ const FULL_MSG = [
   "今日もお疲れ様！",
   "今日も頑張ったね！",
   "今日も一日お疲れ様！",
-  "全部やりきった！"
+  "全部やりきったね！"
 ];
 const FULL_SUB = [
   "今日のぶん、ぜんぶ終わったよ。ゆっくり休んで。",
@@ -723,14 +723,18 @@ const FULL_SUB = [
   "よく頑張りました。明日もいい一日になりますように。"
 ];
 const pick = a => a[Math.floor(Math.random()*a.length)];
+// 呼び方（誰に向けた言葉か）
+const CALL = { kyosuke:"享祐", sister:"りお", mother:"お母さん" };
+const callOf = id => CALL[id] || (members.find(m=>m.id===id)||{}).name || "";
 
 function showPop(kind, d){
   const name = (members.find(m=>m.id===currentMember)||{}).name || "";
   const isFull = kind === "full";
   const photo = isFull ? pick(FAMS) : pick(CATS);
-  const title = isFull ? pick(FULL_MSG) : pick(HALF_MSG);
+  const who   = callOf(currentMember);
+  const title = isFull ? `${who}、${pick(FULL_MSG)}` : `${who}、${pick(HALF_MSG)}`;
   const sub   = isFull ? pick(FULL_SUB) : pick(HALF_SUB);
-  const badge = isFull ? `${name}さん・${MONTH+1}/${d} 完了` : `${name}さん・半分クリア`;
+  const badge = isFull ? `${who}・${MONTH+1}/${d} 完了` : `${who}・半分クリア`;
 
   const el = document.createElement("div");
   el.className = "pop";
