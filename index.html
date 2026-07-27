@@ -111,6 +111,39 @@
   .add-row button{background:var(--gold); border:none; color:#1a1305;
     font-weight:700; border-radius:8px; padding:8px 13px; font-size:13.5px; cursor:pointer;}
 
+  .repeat-row{margin-top:7px;}
+  .repeat-row select{width:100%; background:var(--panel2); border:1px solid var(--line);
+    border-radius:8px; padding:8px 10px; color:var(--sub); font-size:12.5px;}
+
+  /* カレンダー */
+  .cal-wrap{background:var(--panel); border:1px solid var(--line);
+    border-radius:14px; padding:14px; margin-bottom:14px;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;}
+  .cal-head{font-size:11px; color:var(--sub); text-align:center; padding:4px 0;}
+  .cal-head.sun{color:var(--red);} .cal-head.sat{color:var(--uber);}
+  .cal-cell{
+    aspect-ratio:1/1; background:var(--panel2); border:1px solid transparent;
+    border-radius:9px; padding:5px 4px; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+  }
+  .cal-cell.empty{background:transparent; cursor:default;}
+  .cal-cell.today{border-color:var(--gold);}
+  .cal-cell .cd{font-size:13px; font-weight:600;}
+  .cal-cell.today .cd{color:var(--gold);}
+  .cal-cell .cnt{font-size:9.5px; color:var(--sub); margin-top:2px;}
+  .cal-ring{
+    width:22px; height:22px; border-radius:50%; margin-top:4px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px; font-weight:700;
+  }
+  .cal-ring.full{background:var(--green); color:#0c1a12;}
+  .cal-ring.part{background:var(--gold); color:#1a1305;}
+  .cal-ring.none{background:var(--line); color:var(--sub);}
+  .cal-detail{background:var(--panel); border:1px solid var(--line);
+    border-radius:14px; padding:16px;}
+  .cal-detail-title{font-size:15px; font-weight:700; margin:0 0 4px;}
+  .cal-detail-sub{font-size:11.5px; color:var(--sub); margin-bottom:10px;}
+
   /* 可視化 */
   .viz-section{background:var(--panel); border:1px solid var(--line);
     border-radius:14px; padding:16px; margin-bottom:14px;}
@@ -147,7 +180,8 @@
   <h1>今月の<span class="accent">タスク</span>管理 <span style="font-size:13px;color:var(--sub);font-weight:400;" id="monthLabel"></span></h1>
   <div class="member-tabs" id="memberTabs"></div>
   <div class="view-tabs">
-    <button class="view-tab active" data-view="list" onclick="switchView('list')">タスク</button>
+    <button class="view-tab active" data-view="list" onclick="switchView('list')">リスト</button>
+    <button class="view-tab" data-view="cal" onclick="switchView('cal')">カレンダー</button>
     <button class="view-tab" data-view="viz" onclick="switchView('viz')">可視化</button>
   </div>
 </header>
@@ -273,6 +307,7 @@ function switchView(v){
 
 function render(){
   if(currentView === "list") renderList();
+  else if(currentView === "cal") renderCalendar();
   else renderViz();
 }
 
@@ -327,6 +362,14 @@ function renderList(){
           </select>
           <input type="text" id="new-${d}" placeholder="タスクを追加...">
           <button onclick="addTask(${d})">追加</button>
+        </div>
+        <div class="repeat-row">
+          <select id="rep-${d}">
+            <option value="once">この日だけ</option>
+            <option value="daily">毎日（今月の残り全部）</option>
+            <option value="weekly">毎週${WD[new Date(YEAR,MONTH,d).getDay()]}曜（今月の残り）</option>
+            <option value="weekday">平日のみ（今月の残り）</option>
+          </select>
         </div>
       </div>
     </div>`;
@@ -434,26 +477,50 @@ async function toggleTask(id, d){
   const t = tasks.find(x=>x.id===id);
   if(!t) return;
   t.done = !t.done;
-  renderList();
+  render();
   await sb.from("tasks").update({done:t.done}).eq("id", id);
 }
 
 async function delTask(id, d){
   tasks = tasks.filter(x=>x.id!==id);
-  renderList();
+  render();
   await sb.from("tasks").delete().eq("id", id);
 }
 
 async function addTask(d){
   const input = document.getElementById("new-"+d);
   const cat = document.getElementById("cat-"+d).value;
+  const rep = document.getElementById("rep-"+d).value;
   const text = input.value.trim();
   if(!text) return;
   input.value = "";
-  const ds = dateStr(d);
-  const row = {member_id:currentMember, task_date:ds, category:cat, text, sort_order:999};
-  const { data, error } = await sb.from("tasks").insert(row).select().single();
-  if(!error){ tasks.push(data); renderList(); }
+
+  const targetDays = repeatDays(d, rep);
+  const rows = targetDays.map(day => ({
+    member_id: currentMember, task_date: dateStr(day),
+    category: cat, text, sort_order: 999
+  }));
+
+  const { data, error } = await sb.from("tasks").insert(rows).select();
+  if(!error){
+    tasks = tasks.concat(data);
+    render();
+    if(rep !== "once") alert(`「${text}」を${targetDays.length}日分に追加しました。`);
+  }
+}
+
+// 繰り返し設定から対象の日を返す（その日以降のみ）
+function repeatDays(startDay, rep){
+  if(rep === "once") return [startDay];
+  const targetWd = new Date(YEAR, MONTH, startDay).getDay();
+  const days = [];
+  for(let d = startDay; d <= DAYS_IN_MONTH; d++){
+    const wd = new Date(YEAR, MONTH, d).getDay();
+    if(rep === "daily") days.push(d);
+    else if(rep === "weekly" && wd === targetWd) days.push(d);
+    else if(rep === "weekday" && wd >= 1 && wd <= 5) days.push(d);
+  }
+  return days;
 }
 
 async function saveRecord(ds, d, field, value){
@@ -464,11 +531,100 @@ async function saveRecord(ds, d, field, value){
     records.push(r);
   }
   r[field] = v;
-  renderList();
+  render();
   await sb.from("daily_records").upsert({
     member_id:currentMember, record_date:ds,
     uber_sales:r.uber_sales, eigyou_self:r.eigyou_self, eigyou_team:r.eigyou_team
   }, {onConflict:"member_id,record_date"});
+}
+
+// ===== カレンダー =====
+let calSelectedDay = null;
+
+function renderCalendar(){
+  const app = document.getElementById("app");
+  const firstWd = new Date(YEAR, MONTH, 1).getDay();
+  const today = (now.getFullYear()===YEAR && now.getMonth()===MONTH) ? now.getDate() : -1;
+
+  let html = `<div class="cal-wrap"><div class="cal-grid">`;
+  WD.forEach((w,i)=>{
+    const cls = i===0 ? "sun" : (i===6 ? "sat" : "");
+    html += `<div class="cal-head ${cls}">${w}</div>`;
+  });
+  for(let i=0; i<firstWd; i++) html += `<div class="cal-cell empty"></div>`;
+
+  for(let d=1; d<=DAYS_IN_MONTH; d++){
+    const ds = dateStr(d);
+    const dt = tasks.filter(t=>t.member_id===currentMember && t.task_date===ds);
+    const done = dt.filter(t=>t.done).length;
+    const total = dt.length;
+    let ringCls = "none", ringTxt = "–";
+    if(total > 0){
+      if(done === total){ ringCls="full"; ringTxt="✓"; }
+      else { ringCls="part"; ringTxt=done; }
+    }
+    html += `<div class="cal-cell ${d===today?'today':''}" onclick="selectCalDay(${d})">
+      <div class="cd">${d}</div>
+      <div class="cal-ring ${ringCls}">${ringTxt}</div>
+      <div class="cnt">${total?done+"/"+total:""}</div>
+    </div>`;
+  }
+  html += `</div></div>`;
+
+  // 選択した日の詳細
+  const sel = calSelectedDay || (today > 0 ? today : 1);
+  html += renderCalDetail(sel);
+  app.innerHTML = html;
+}
+
+function renderCalDetail(d){
+  const ds = dateStr(d);
+  const wd = WD[new Date(YEAR, MONTH, d).getDay()];
+  const dt = tasks.filter(t=>t.member_id===currentMember && t.task_date===ds);
+  const rec = getRecord(currentMember, ds);
+  const done = dt.filter(t=>t.done).length;
+
+  let html = `<div class="cal-detail">
+    <div class="cal-detail-title">${MONTH+1}月${d}日（${wd}）</div>
+    <div class="cal-detail-sub">${done}/${dt.length} 完了`;
+  if(currentMember === "kyosuke"){
+    const yen = rec.uber_sales + rec.eigyou_self*EIGYOU_SELF_YEN + rec.eigyou_team*EIGYOU_TEAM_YEN;
+    html += ` ／ 売上 ¥${yen.toLocaleString()}`;
+  }
+  html += `</div>`;
+
+  if(dt.length === 0){
+    html += `<div style="color:var(--sub);font-size:13px;padding:8px 0;">タスクはまだありません。</div>`;
+  } else {
+    html += renderDayTasks(d, ds, dt, rec);
+  }
+
+  html += `<div class="add-row">
+      <select id="cat-${d}">
+        <option value="daily">日常</option>
+        <option value="uber">Uber</option>
+        <option value="eigyou">営業代行</option>
+        <option value="other">その他</option>
+      </select>
+      <input type="text" id="new-${d}" placeholder="タスクを追加...">
+      <button onclick="addTask(${d})">追加</button>
+    </div>
+    <div class="repeat-row">
+      <select id="rep-${d}">
+        <option value="once">この日だけ</option>
+        <option value="daily">毎日（今月の残り全部）</option>
+        <option value="weekly">毎週${wd}曜（今月の残り）</option>
+        <option value="weekday">平日のみ（今月の残り）</option>
+      </select>
+    </div>
+  </div>`;
+  return html;
+}
+
+function selectCalDay(d){
+  calSelectedDay = d;
+  renderCalendar();
+  document.querySelector(".cal-detail").scrollIntoView({behavior:"smooth", block:"start"});
 }
 
 // ===== 可視化 =====
