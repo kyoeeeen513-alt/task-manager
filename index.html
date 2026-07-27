@@ -48,16 +48,16 @@
   }
 
   /* メンバー切り替え */
-  .member-tabs{display:flex; gap:8px; margin-bottom:12px;}
+  .member-tabs{display:flex; gap:6px; margin-bottom:12px;}
   .member-tab{
-    flex:1; background:var(--panel); border:1.5px solid var(--line);
+    flex:1; min-width:0; background:var(--panel); border:1.5px solid var(--line);
     box-shadow:0 2px 8px rgba(30,60,90,.05);
-    border-radius:12px; padding:9px 4px 8px; text-align:center;
-    font-size:13px; color:var(--sub); cursor:pointer; font-weight:600;
-    display:flex; flex-direction:column; align-items:center; gap:6px;
+    border-radius:12px; padding:8px 3px 7px; text-align:center;
+    font-size:12.5px; color:var(--sub); cursor:pointer; font-weight:600;
+    display:flex; flex-direction:column; align-items:center; gap:5px;
   }
-  .member-tab img{
-    width:42px; height:42px; border-radius:50%; object-fit:cover;
+  .member-tab > img{
+    width:38px; height:38px; border-radius:50%; object-fit:cover;
     border:2px solid var(--line);
   }
   .member-tab.active{background:var(--accent-soft); color:var(--ink);}
@@ -70,9 +70,28 @@
   .member-tab.active[data-m="mother"]{border-color:var(--uber);}
   .member-tab.active[data-m="mother"] img{border-color:var(--uber);}
   .member-tab.active[data-m="mother"] .mn{color:var(--uber);}
-  .member-tab .mrem{font-size:10.5px; color:var(--sub); font-weight:400;}
+  .member-tab .mrem{font-size:9.5px; color:var(--sub); font-weight:400; white-space:nowrap;}
 
   /* ビュー切り替え */
+  .member-tab.all{}
+  .all-faces{display:flex; justify-content:center;}
+  .all-faces img{
+    width:26px; height:26px; border-radius:50%; object-fit:cover;
+    border:2px solid var(--panel); margin-left:-8px;
+  }
+  .all-faces img:first-child{margin-left:0;}
+  .member-tab.all.active{border-color:#35b98a; background:#e7f8f1;}
+  .member-tab.all.active .mn{color:#1f8f68;}
+  .all-block{margin-top:12px; padding-top:11px; border-top:1px solid #eef3f7;}
+  .all-block:first-child{border-top:none; padding-top:2px;}
+  .all-head{display:flex; align-items:center; gap:8px; margin-bottom:5px;}
+  .all-face{width:24px; height:24px; border-radius:50%; object-fit:cover;
+    border:2px solid var(--line);}
+  .all-name{font-size:13px; font-weight:700;}
+  .all-count{margin-left:auto; font-size:11.5px; color:var(--sub); font-weight:700;}
+  .all-count.ok{color:var(--green);}
+  .all-empty{font-size:12px; color:var(--sub); padding:4px 2px;}
+
   .view-tabs{display:flex; gap:7px; align-items:stretch;}
   .view-tab{
     flex:1; padding:10px 0; border-radius:12px; background:var(--panel);
@@ -198,6 +217,33 @@
     border-radius:8px; padding:9px 6px; color:var(--ink); font-size:12.5px;}
   .add-row button{background:var(--accent); border:none; color:#fff;
     font-weight:700; border-radius:8px; padding:9px 14px; font-size:13.5px; cursor:pointer;}
+  .ramen-row{
+    display:flex; align-items:center; gap:11px; cursor:pointer;
+    background:var(--panel2); border:1px solid var(--line);
+    border-radius:12px; padding:11px 13px; margin:12px 0 4px;
+    transition:background .2s, border-color .2s;
+  }
+  .ramen-row.on{background:#fff4e6; border-color:#f0a83c;}
+  .ramen-ico{font-size:20px; flex-shrink:0;}
+  .ramen-txt{flex:1; min-width:0;}
+  .ramen-t{font-size:13px; font-weight:700;}
+  .ramen-row.on .ramen-t{color:#c9762a;}
+  .ramen-s{font-size:10.5px; color:var(--sub); margin-top:2px;}
+  .ramen-sw{
+    width:44px; height:25px; border-radius:999px; background:#cdd9e2;
+    flex-shrink:0; position:relative; transition:background .22s;
+  }
+  .ramen-sw.on{background:#f0a83c;}
+  .ramen-sw span{
+    position:absolute; top:3px; left:3px; width:19px; height:19px;
+    border-radius:50%; background:#fff; transition:transform .22s;
+    box-shadow:0 1px 4px rgba(0,0,0,.25);
+  }
+  .ramen-sw.on span{transform:translateX(19px);}
+  .rest-tag{
+    background:#fff4e6; color:#c9762a; font-size:10.5px; font-weight:700;
+    padding:2px 7px; border-radius:6px; margin-right:4px;
+  }
   .time-row{display:flex; align-items:center; gap:7px; margin-top:7px;}
   .time-lbl{font-size:11.5px; color:var(--sub); flex-shrink:0;}
   .time-in{flex:1; min-width:0; background:var(--panel2); border:1px solid var(--line);
@@ -212,6 +258,104 @@
   .repeat-row select{width:100%; background:var(--panel2);
     border:1px solid var(--line); border-radius:8px; padding:8px 10px;
     color:var(--sub); font-size:12.5px;}
+
+  /* ===== おみくじ ===== */
+  .omi{
+    position:fixed; inset:0; z-index:300; display:flex;
+    align-items:center; justify-content:center; padding:16px;
+    background:rgba(20,40,60,0); backdrop-filter:blur(0);
+    transition:background .4s, backdrop-filter .4s;
+  }
+  .omi.show{background:rgba(20,40,60,.7); backdrop-filter:blur(8px);}
+  .omi-card{
+    width:100%; max-width:360px; border-radius:26px; overflow:hidden;
+    background:linear-gradient(170deg,#fffdf7,#fff6ec 45%,#ffeede);
+    box-shadow:0 26px 70px rgba(10,30,50,.45);
+    transform:translateY(40px) scale(.86); opacity:0;
+    transition:transform .5s cubic-bezier(.16,1.32,.36,1), opacity .32s;
+    position:relative;
+  }
+  .omi.show .omi-card{transform:translateY(0) scale(1); opacity:1;}
+  .omi-top{
+    background:linear-gradient(135deg,#ff9db0,#ffb37a);
+    padding:16px 18px 14px; text-align:center; color:#fff; position:relative;
+  }
+  .omi-top::after{
+    content:""; position:absolute; left:0; right:0; bottom:-1px; height:14px;
+    background:radial-gradient(circle at 10px -2px, transparent 9px, #fffdf7 10px);
+    background-size:20px 14px;
+  }
+  .omi-ttl{font-size:15px; font-weight:800; letter-spacing:.16em;}
+  .omi-date{font-size:10.5px; opacity:.92; margin-top:2px; letter-spacing:.05em;}
+
+  /* 引く前 */
+  .omi-draw{padding:30px 20px 30px; text-align:center;}
+  .omi-box{
+    width:104px; height:132px; margin:0 auto 16px; position:relative;
+    background:linear-gradient(160deg,#ff8fa6,#ff7089);
+    border-radius:14px; box-shadow:0 10px 24px rgba(255,120,145,.4);
+    animation:wobble 1.5s ease-in-out infinite;
+    display:flex; align-items:center; justify-content:center;
+  }
+  @keyframes wobble{
+    0%,100%{transform:rotate(-4deg) translateY(0);}
+    50%{transform:rotate(4deg) translateY(-6px);}
+  }
+  .omi-box span{font-size:38px;}
+  .omi-box::before{
+    content:""; position:absolute; top:-9px; left:50%; transform:translateX(-50%);
+    width:34px; height:12px; background:#f2d38a; border-radius:5px;
+  }
+  .omi-lead{font-size:14px; color:#8a6a52; margin-bottom:15px; line-height:1.6;}
+  .omi-btn{
+    background:linear-gradient(135deg,#ff8fa6,#ffa579); border:none; color:#fff;
+    font-size:15px; font-weight:800; padding:13px 34px; border-radius:999px;
+    box-shadow:0 8px 20px rgba(255,130,150,.45); cursor:pointer;
+    letter-spacing:.06em;
+  }
+  .omi-btn:active{transform:scale(.96);}
+
+  /* 結果 */
+  .omi-res{padding:20px 20px 18px; text-align:center;}
+  .omi-luck{
+    font-size:44px; font-weight:900; letter-spacing:.1em; line-height:1.1;
+    background:linear-gradient(135deg,#f2913f,#e2607b);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    opacity:0; transform:scale(.5);
+    animation:luckIn .6s .05s cubic-bezier(.2,1.6,.4,1) forwards;
+  }
+  @keyframes luckIn{to{opacity:1; transform:scale(1);}}
+  .omi-word{
+    font-size:12.5px; color:#8a6a52; margin:7px 0 15px; line-height:1.6;
+    opacity:0; animation:fadeUp .5s .3s forwards;
+  }
+  @keyframes fadeUp{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+  .omi-rows{display:flex; flex-direction:column; gap:9px; margin-bottom:14px;}
+  .omi-row{
+    display:flex; align-items:center; gap:9px;
+    background:rgba(255,255,255,.75); border-radius:12px; padding:9px 12px;
+    opacity:0; animation:fadeUp .45s forwards;
+  }
+  .omi-row:nth-child(1){animation-delay:.4s;}
+  .omi-row:nth-child(2){animation-delay:.5s;}
+  .omi-row:nth-child(3){animation-delay:.6s;}
+  .omi-ico{font-size:17px;}
+  .omi-lbl{font-size:12.5px; color:#7c6250; font-weight:700; width:52px; text-align:left;}
+  .omi-stars{margin-left:auto; font-size:14px; letter-spacing:1px;}
+  .omi-star-on{color:#f5a623;}
+  .omi-star-off{color:#e5d9cc;}
+  .omi-item{
+    background:linear-gradient(135deg,#fff3e2,#ffe9f0);
+    border:1.5px dashed #f0b39a; border-radius:14px; padding:12px;
+    opacity:0; animation:fadeUp .5s .72s forwards;
+  }
+  .omi-item-l{font-size:10.5px; color:#b08a72; letter-spacing:.1em; font-weight:700;}
+  .omi-item-v{font-size:17px; font-weight:800; color:#d2683f; margin-top:3px;}
+  .omi-close{
+    display:block; width:100%; margin-top:14px; background:none; border:none;
+    color:#a9927f; font-size:12.5px; cursor:pointer; padding:6px;
+    opacity:0; animation:fadeUp .5s .85s forwards;
+  }
 
   /* ===== ポップアップ演出 ===== */
   .pop{
@@ -392,6 +536,7 @@ const GOALS = { kyosuke:{ uber:150000, eigyou:100000 } };
 const EIGYOU_SELF_YEN = 8000;
 const EIGYOU_TEAM_YEN = 3000;
 const hasMoney = id => !!GOALS[id];
+const isAll = () => currentMember === "all";
 
 const CAT_META = {
   daily:  {label:"日常", dot:"daily"},
@@ -404,19 +549,21 @@ const CAT_META = {
 const CAT_SIMPLE = ["daily","other"];
 
 const DEFAULT_TASKS_KYOSUKE = [
-  {cat:"daily",  text:"7:00–7:30　ランニング"},
-  {cat:"daily",  text:"7:30–8:30　洗濯"},
-  {cat:"nomigo", text:"8:30–11:30　Nomi Go事業"},
-  {cat:"uber",   text:"12:00–14:00　Uber稼働"},
-  {cat:"nomigo", text:"15:00–19:00　Nomi Go事業"},
-  {cat:"uber",   text:"19:00–22:30　Uber稼働"},
-  {cat:"uber",   text:"Uber：当日の売上を記録"},
-  {cat:"eigyou", text:"新規アプローチ（架電/DM/訪問）"},
-  {cat:"eigyou", text:"既存見込み客フォロー"},
-  {cat:"other",  text:"猫のトイレ・砂掃除"},
-  {cat:"other",  text:"食器洗い"},
-  {cat:"daily",  text:"夜の振り返り・翌日タスク整理"}
+  {cat:"daily",  text:"ランニング",                   st:"07:00", et:"07:30"},
+  {cat:"daily",  text:"洗濯",                         st:"07:30", et:"08:30"},
+  {cat:"nomigo", text:"Nomi Go事業",                  st:"08:30", et:"11:30"},
+  {cat:"uber",   text:"Uber稼働",                     st:"12:00", et:"14:00"},
+  {cat:"nomigo", text:"Nomi Go事業",                  st:"15:00", et:"19:00"},
+  {cat:"uber",   text:"Uber稼働",                     st:"19:00", et:"22:30"},
+  {cat:"uber",   text:"Uber：当日の売上を記録",        st:null,    et:null},
+  {cat:"eigyou", text:"新規アプローチ（架電/DM/訪問）", st:null,    et:null},
+  {cat:"eigyou", text:"既存見込み客フォロー",           st:null,    et:null},
+  {cat:"other",  text:"猫のトイレ・砂掃除",             st:null,    et:null},
+  {cat:"other",  text:"食器洗い",                     st:null,    et:null},
+  {cat:"daily",  text:"夜の振り返り・翌日タスク整理",   st:"22:30", et:null}
 ];
+// 午前とみなす境界（この時刻より前に始まるタスクが午前）
+const MORNING_END = "12:00";
 
 let members = [], currentMember = "kyosuke", currentView = "list";
 let tasks = [], records = [], openDays = new Set(), calSelectedDay = null;
@@ -447,6 +594,7 @@ async function init(){
   members = mem;
   renderMemberTabs();
   await loadMonth();
+  maybeShowOmikuji();
 }
 
 function buildMonthOptions(){
@@ -503,7 +651,8 @@ async function seedKyosuke(){
     const ds = dateStr(d);
     if(existing.has(ds)) continue;
     DEFAULT_TASKS_KYOSUKE.forEach((dt,i)=>{
-      rows.push({member_id:"kyosuke", task_date:ds, category:dt.cat, text:dt.text, sort_order:i});
+      rows.push({member_id:"kyosuke", task_date:ds, category:dt.cat, text:dt.text,
+        sort_order:i, start_time:dt.st, end_time:dt.et});
     });
   }
   if(rows.length === 0) return;
@@ -519,10 +668,28 @@ function showError(e){
 function renderMemberTabs(){
   const el = document.getElementById("memberTabs");
   const tdate = todayDate();
-  el.innerHTML = members.map(m=>{
+
+  // 「みんな」タブ
+  let allRem = "";
+  if(tdate > 0){
+    let rem = 0, tot = 0;
+    members.forEach(m=>{
+      const dt = tasksFor(m.id, tdate, dateStr(tdate));
+      tot += dt.length; rem += dt.filter(t=>!t.done).length;
+    });
+    allRem = tot===0 ? "今日 —" : (rem===0 ? "今日 完了" : "今日 残り"+rem);
+  }
+  let html = `<div class="member-tab all ${currentMember==='all'?'active':''}" data-m="all"
+      onclick="switchMember('all')">
+      <div class="all-faces">${members.map(m=>`<img src="${IMG[m.id]}" alt="">`).join("")}</div>
+      <span class="mn">みんな</span>
+      <span class="mrem">${allRem}</span>
+    </div>`;
+
+  html += members.map(m=>{
     let rem = "";
     if(tdate > 0){
-      const dt = tasks.filter(t=>t.member_id===m.id && t.task_date===dateStr(tdate));
+      const dt = tasksFor(m.id, tdate, dateStr(tdate));
       const r = dt.filter(t=>!t.done).length;
       rem = dt.length===0 ? "今日 —" : (r===0 ? "今日 完了" : "今日 残り"+r);
     }
@@ -533,6 +700,20 @@ function renderMemberTabs(){
       <span class="mrem">${rem}</span>
     </div>`;
   }).join("");
+
+  el.innerHTML = html;
+}
+
+// 指定メンバー・指定日の表示対象タスク（ラーメンバイト考慮）
+function tasksFor(memberId, d, ds){
+  let dt = tasks.filter(t=>t.member_id===memberId && t.task_date===ds);
+  if(hasMoney(memberId)){
+    const pv = new Date(YEAR, MONTH, d-1);
+    const pds = `${pv.getFullYear()}-${String(pv.getMonth()+1).padStart(2,"0")}-${String(pv.getDate()).padStart(2,"0")}`;
+    const pr = records.find(x=>x.member_id===memberId && x.record_date===pds);
+    if(pr && pr.ramen_shift) dt = dt.filter(t=>!isMorningTask(t));
+  }
+  return dt;
 }
 
 function switchMember(id){
@@ -557,12 +738,13 @@ function render(){
 
 // ===== リスト =====
 function renderList(){
-  let html = hasMoney(currentMember) ? renderGoalStrip() : "";
+  let html = (hasMoney(currentMember) || isAll()) ? renderGoalStrip() : "";
   const td = todayDate();
 
   for(let d=1; d<=DAYS_IN_MONTH; d++){
     const ds = dateStr(d);
-    const dt = tasks.filter(t=>t.member_id===currentMember && t.task_date===ds);
+    if(isAll()){ html += renderAllDay(d, ds, td); continue; }
+    const dt = visibleTasks(d, ds);
     const rec = getRecord(currentMember, ds);
     const done = dt.filter(t=>t.done).length, total = dt.length;
     const pct = total ? Math.round(done/total*100) : 0;
@@ -571,6 +753,7 @@ function renderList(){
 
     let meta = total===0 ? "タスクなし"
       : (done===total ? `<span class="alldone">✓ 全${total}件 完了</span>` : `${done}/${total} 完了`);
+    if(isMorningOff(d)) meta = `<span class="rest-tag">🍜 午前休み</span> ` + meta;
     if(hasMoney(currentMember)){
       const yen = rec.uber_sales + rec.eigyou_self*EIGYOU_SELF_YEN + rec.eigyou_team*EIGYOU_TEAM_YEN;
       meta += ` ／ 売上 <b>¥${yen.toLocaleString()}</b>`;
@@ -590,6 +773,7 @@ function renderList(){
         <div class="chevron">▶</div>
       </div>
       <div class="day-body">
+        ${renderRamenRow(d, ds, rec)}
         ${renderDayTasks(d, ds, dt, rec)}
         ${renderAddRow(d)}
       </div>
@@ -600,6 +784,79 @@ function renderList(){
     listScrolled = true;
     const el = document.getElementById("day-"+td);
     if(el) setTimeout(()=>el.scrollIntoView({behavior:"smooth", block:"center"}), 120);
+  }
+}
+
+function renderRamenRow(d, ds, rec){
+  if(!hasMoney(currentMember)) return "";
+  const on = !!rec.ramen_shift;
+  return `<div class="ramen-row ${on?'on':''}" onclick="toggleRamen('${ds}',${d})">
+    <div class="ramen-ico">🍜</div>
+    <div class="ramen-txt">
+      <div class="ramen-t">この日はラーメンバイト</div>
+      <div class="ramen-s">${on ? "翌日の午前タスクは自動でお休みになります" : "入れると翌日の午前が休みになります"}</div>
+    </div>
+    <div class="ramen-sw ${on?'on':''}"><span></span></div>
+  </div>`;
+}
+
+function renderAllDay(d, ds, td){
+  const wdi = new Date(YEAR,MONTH,d).getDay();
+  const wdCls = wdi===0?"sun":(wdi===6?"sat":"");
+  let done=0, total=0;
+  const blocks = members.map(m=>{
+    const dt = tasksFor(m.id, d, ds).slice().sort(sortByTime);
+    const dn = dt.filter(t=>t.done).length;
+    done += dn; total += dt.length;
+    const rows = dt.length===0
+      ? `<div class="all-empty">タスクなし</div>`
+      : dt.map(t=>`<div class="task ${t.done?'done':''}">
+          <input type="checkbox" id="a-${t.id}" ${t.done?'checked':''}
+            onchange="toggleTaskFor('${t.id}','${m.id}',${d})">
+          <label for="a-${t.id}">${timeBadge(t)}${esc(t.text)}</label>
+        </div>`).join("");
+    return `<div class="all-block">
+      <div class="all-head">
+        <img src="${IMG[m.id]}" class="all-face" style="border-color:${m.color}">
+        <span class="all-name">${m.name}</span>
+        <span class="all-count ${dt.length&&dn===dt.length?'ok':''}">${dn}/${dt.length}</span>
+      </div>${rows}</div>`;
+  }).join("");
+
+  const pct = total ? Math.round(done/total*100) : 0;
+  const meta = total===0 ? "タスクなし"
+    : (done===total ? `<span class="alldone">✓ 家族全員 完了</span>` : `家族全体 ${done}/${total} 完了`);
+
+  return `<div class="day-block ${openDays.has(d)?'open':''} ${d===td?'is-today':''}" id="day-${d}">
+    <div class="day-head" onclick="toggleDay(${d})">
+      <div class="left">
+        <div class="day-num ${d===td?'today':''}">${d}</div>
+        <div class="day-weekday ${wdCls}">${WD[wdi]}</div>
+        <div>
+          ${d===td?'<div class="today-chip">TODAY</div>':''}
+          <div class="day-meta">${meta}</div>
+          <div class="day-progress-bar"><div class="day-progress-fill" style="width:${pct}%"></div></div>
+        </div>
+      </div>
+      <div class="chevron">▶</div>
+    </div>
+    <div class="day-body">${blocks}</div>
+  </div>`;
+}
+
+// みんな画面からのチェック（相手のタスクも押せる）
+async function toggleTaskFor(id, memberId, d){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  const was = t.done;
+  t.done = !t.done;
+  render(); renderMemberTabs();
+  await sb.from("tasks").update({done:t.done}).eq("id",id);
+  if(was) return;
+  const ds = dateStr(d);
+  const after = tasksFor(memberId, d, ds);
+  if(after.length>0 && after.every(x=>x.done)){
+    setTimeout(()=>showPopFor("full", d, memberId), 260);
   }
 }
 
@@ -734,6 +991,22 @@ function renderDayTasks(d, ds, dt, rec){
   return html;
 }
 
+// 前日がラーメンバイトなら、その日の午前タスクは表示しない
+function isMorningOff(d){
+  if(!hasMoney(currentMember)) return false;
+  const prev = new Date(YEAR, MONTH, d-1);
+  const pds = `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,"0")}-${String(prev.getDate()).padStart(2,"0")}`;
+  const r = records.find(x=>x.member_id===currentMember && x.record_date===pds);
+  return !!(r && r.ramen_shift);
+}
+function isMorningTask(t){
+  return !!(t.start_time && t.start_time < MORNING_END);
+}
+// その日に表示するタスク（午前オフなら午前を除く）
+function visibleTasks(d, ds){
+  return tasksFor(currentMember, d, ds);
+}
+
 function getRecord(id, ds){
   return records.find(x=>x.member_id===id && x.record_date===ds)
     || {uber_sales:0, eigyou_self:0, eigyou_team:0};
@@ -760,7 +1033,7 @@ async function toggleTask(id, d){
   const t = tasks.find(x=>x.id===id);
   if(!t) return;
   const ds = dateStr(d);
-  const before = tasks.filter(x=>x.member_id===currentMember && x.task_date===ds);
+  const before = visibleTasks(d, ds);
   const beforeDone = before.filter(x=>x.done).length;
   const was = t.done;
   t.done = !t.done;
@@ -768,7 +1041,7 @@ async function toggleTask(id, d){
   await sb.from("tasks").update({done:t.done}).eq("id",id);
 
   if(was) return; // チェックを外した時は出さない
-  const after = tasks.filter(x=>x.member_id===currentMember && x.task_date===ds);
+  const after = visibleTasks(d, ds);
   const total = after.length;
   const afterDone = after.filter(x=>x.done).length;
   if(total === 0) return;
@@ -810,11 +1083,12 @@ const pick = a => a[Math.floor(Math.random()*a.length)];
 const CALL = { kyosuke:"享祐", sister:"りお", mother:"お母さん" };
 const callOf = id => CALL[id] || (members.find(m=>m.id===id)||{}).name || "";
 
-function showPop(kind, d){
-  const name = (members.find(m=>m.id===currentMember)||{}).name || "";
+function showPop(kind, d){ showPopFor(kind, d, currentMember); }
+
+function showPopFor(kind, d, memberId){
   const isFull = kind === "full";
   const photo = isFull ? pick(FAMS) : pick(CATS);
-  const who   = callOf(currentMember);
+  const who   = callOf(memberId);
   const title = isFull ? `${who}、${pick(FULL_MSG)}` : `${who}、${pick(HALF_MSG)}`;
   const sub   = isFull ? pick(FULL_SUB) : pick(HALF_SUB);
   const badge = isFull ? `${who}・${MONTH+1}/${d} 完了` : `${who}・半分クリア`;
@@ -896,19 +1170,144 @@ function repeatDays(start, rep){
   return out;
 }
 
+async function toggleRamen(ds, d){
+  let r = records.find(x=>x.member_id===currentMember && x.record_date===ds);
+  if(!r){
+    r = {member_id:currentMember, record_date:ds, uber_sales:0, eigyou_self:0,
+         eigyou_team:0, ramen_shift:false};
+    records.push(r);
+  }
+  r.ramen_shift = !r.ramen_shift;
+  render(); renderMemberTabs();
+  await sb.from("daily_records").upsert({
+    member_id:currentMember, record_date:ds,
+    uber_sales:r.uber_sales, eigyou_self:r.eigyou_self,
+    eigyou_team:r.eigyou_team, ramen_shift:r.ramen_shift
+  }, {onConflict:"member_id,record_date"});
+}
+
 async function saveRecord(ds, field, value){
   const v = parseInt(value)||0;
   let r = records.find(x=>x.member_id===currentMember && x.record_date===ds);
   if(!r){
-    r = {member_id:currentMember, record_date:ds, uber_sales:0, eigyou_self:0, eigyou_team:0};
+    r = {member_id:currentMember, record_date:ds, uber_sales:0, eigyou_self:0,
+         eigyou_team:0, ramen_shift:false};
     records.push(r);
   }
   r[field] = v;
   render();
   await sb.from("daily_records").upsert({
     member_id:currentMember, record_date:ds,
-    uber_sales:r.uber_sales, eigyou_self:r.eigyou_self, eigyou_team:r.eigyou_team
+    uber_sales:r.uber_sales, eigyou_self:r.eigyou_self,
+    eigyou_team:r.eigyou_team, ramen_shift:!!r.ramen_shift
   }, {onConflict:"member_id,record_date"});
+}
+
+
+// ===== おみくじ =====
+const LUCKS = [
+  {name:"大吉", w:8,  word:"最高の一日になりそう。思い切って動いていい日。"},
+  {name:"中吉", w:18, word:"流れは good。丁寧にいけば結果がついてくる。"},
+  {name:"小吉", w:22, word:"小さな良いことが積み重なる日。焦らずいこう。"},
+  {name:"吉",   w:24, word:"落ち着いた一日。いつも通りが一番強い。"},
+  {name:"末吉", w:18, word:"後半に運が上がる。午前はためる時間。"},
+  {name:"凶",   w:10, word:"無理は禁物。ひとつ終わらせるだけで十分。"}
+];
+const LUCKY_ITEMS = [
+  "白いタオル","温かいお茶","青いペン","窓際の席","甘いもの","黒い靴下",
+  "レモン","メモ帳","朝の散歩","炭酸水","丸いもの","赤い小物",
+  "コーヒー","ハンカチ","好きな音楽","早起き","おにぎり","観葉植物",
+  "帽子","水色のもの","深呼吸","チョコレート","時計","鏡を見ること",
+  "笑うこと","猫を撫でること","味噌汁","新しい靴下","日光を浴びること",
+  "アイスコーヒー","星の模様","バナナ"
+];
+
+// 日付＋メンバーで固定の運勢（同じ日は何度開いても同じ）
+function seedRand(str){
+  let h = 2166136261;
+  for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return ()=>{ h = Math.imul(h ^ (h>>>15), 2246822507); h ^= h>>>13; return ((h>>>0)%10000)/10000; };
+}
+function drawFortune(key){
+  const r = seedRand(key);
+  const total = LUCKS.reduce((a,b)=>a+b.w,0);
+  let x = r()*total, luck = LUCKS[LUCKS.length-1];
+  for(const l of LUCKS){ if(x < l.w){ luck = l; break; } x -= l.w; }
+  const stars = () => 1 + Math.floor(r()*5);
+  return {
+    luck,
+    money: stars(),
+    work: stars(),
+    total: stars(),
+    item: LUCKY_ITEMS[Math.floor(r()*LUCKY_ITEMS.length)]
+  };
+}
+function starHtml(n){
+  let h="";
+  for(let i=1;i<=5;i++) h += `<span class="${i<=n?'omi-star-on':'omi-star-off'}">★</span>`;
+  return h;
+}
+function omiKey(){
+  const t = new Date();
+  return `${t.getFullYear()}-${t.getMonth()+1}-${t.getDate()}`;
+}
+function maybeShowOmikuji(){
+  const t = new Date();
+  if(t.getHours() < 7) return;                 // 朝7時より前は出さない
+  const key = "omikuji_" + omiKey();
+  try{ if(localStorage.getItem(key)) return; }catch(e){ return; }
+  showOmikuji(key);
+}
+function showOmikuji(key){
+  const t = new Date();
+  const el = document.createElement("div");
+  el.className = "omi";
+  el.innerHTML = `<div class="omi-card">
+    <div class="omi-top">
+      <div class="omi-ttl">今日のおみくじ</div>
+      <div class="omi-date">${t.getFullYear()}.${t.getMonth()+1}.${t.getDate()}</div>
+    </div>
+    <div class="omi-draw" id="omiDraw">
+      <div class="omi-box"><span>🎴</span></div>
+      <div class="omi-lead">今日はどんな一日かな？<br>おみくじを引いてみよう</div>
+      <button class="omi-btn" onclick="doDraw('${key}')">引く</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+  window.__omiEl = el;
+  requestAnimationFrame(()=>el.classList.add("show"));
+}
+function doDraw(key){
+  const el = window.__omiEl;
+  if(!el) return;
+  try{ localStorage.setItem(key, "1"); }catch(e){}
+  const f = drawFortune(key + "|" + currentMember);
+  const box = el.querySelector(".omi-card");
+  box.querySelector("#omiDraw").outerHTML = `
+    <div class="omi-res">
+      <div class="omi-luck">${f.luck.name}</div>
+      <div class="omi-word">${f.luck.word}</div>
+      <div class="omi-rows">
+        <div class="omi-row"><span class="omi-ico">🌈</span><span class="omi-lbl">総合運</span>
+          <span class="omi-stars">${starHtml(f.total)}</span></div>
+        <div class="omi-row"><span class="omi-ico">💰</span><span class="omi-lbl">金運</span>
+          <span class="omi-stars">${starHtml(f.money)}</span></div>
+        <div class="omi-row"><span class="omi-ico">💼</span><span class="omi-lbl">仕事運</span>
+          <span class="omi-stars">${starHtml(f.work)}</span></div>
+      </div>
+      <div class="omi-item">
+        <div class="omi-item-l">LUCKY ITEM</div>
+        <div class="omi-item-v">${f.item}</div>
+      </div>
+      <button class="omi-close" onclick="closeOmi()">閉じて今日をはじめる</button>
+    </div>`;
+  if(f.luck.name === "大吉") confetti(el);
+}
+function closeOmi(){
+  const el = window.__omiEl;
+  if(!el) return;
+  el.classList.remove("show");
+  setTimeout(()=>{ el.remove(); window.__omiEl = null; }, 420);
 }
 
 // ===== カレンダー =====
@@ -925,7 +1324,7 @@ function renderCalendar(){
     const ds = dateStr(d);
     let rows = "";
     members.forEach(m=>{
-      const dt = tasks.filter(t=>t.member_id===m.id && t.task_date===ds);
+      const dt = tasksFor(m.id, d, ds);
       const rem = dt.filter(t=>!t.done).length;
       const cls = dt.length===0 ? "off" : (rem===0 ? "ok" : "");
       const val = dt.length===0 ? "–" : (rem===0 ? "✓" : rem);
@@ -947,7 +1346,7 @@ function renderCalendar(){
 function renderCalDetail(d){
   const ds = dateStr(d);
   const wd = WD[new Date(YEAR,MONTH,d).getDay()];
-  const dt = tasks.filter(t=>t.member_id===currentMember && t.task_date===ds);
+  const dt = visibleTasks(d, ds);
   const rec = getRecord(currentMember, ds);
   const done = dt.filter(t=>t.done).length;
   const name = (members.find(m=>m.id===currentMember)||{}).name||"";
@@ -960,6 +1359,7 @@ function renderCalDetail(d){
     html += ` ／ 売上 ¥${yen.toLocaleString()}`;
   }
   html += `</div>`;
+  html += renderRamenRow(d, ds, rec);
   html += dt.length===0
     ? `<div style="color:var(--sub);font-size:13px;padding:6px 0;">タスクはまだありません。</div>`
     : renderDayTasks(d, ds, dt, rec);
