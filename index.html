@@ -426,11 +426,11 @@
   .cal-wrap{background:var(--panel); border:1px solid var(--line);
     border-radius:14px; padding:13px 9px; margin-bottom:13px;
     box-shadow:0 2px 8px rgba(30,60,90,.05);}
-  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px; align-items:start;}
   .cal-head{font-size:10.5px; color:var(--sub); text-align:center; padding:3px 0;}
   .cal-head.sun{color:var(--red);} .cal-head.sat{color:var(--uber);}
   .cal-cell{
-    min-height:78px; background:var(--panel2);
+    min-height:78px; height:auto; background:var(--panel2);
     border:1.5px solid transparent; border-radius:10px; padding:5px 4px 4px;
     cursor:pointer; display:flex; flex-direction:column; gap:3px; overflow:hidden;
   }
@@ -456,7 +456,10 @@
   .ev-chip span{overflow:hidden; text-overflow:ellipsis;}
   .ev-chip.done{opacity:.45; text-decoration:line-through;}
   .ev-chip i{display:none;}
-  .ev-more{font-size:8px; color:var(--sub); padding-left:3px;}
+  .ev-more{
+    font-size:8px; color:var(--accent); padding:2px 3px; font-weight:700;
+    cursor:pointer; text-decoration:underline;
+  }
   .cal-legend{display:flex; gap:11px; justify-content:center; flex-wrap:wrap;
     margin-top:11px; font-size:10.5px; color:var(--sub);}
   .cal-legend span{display:flex; align-items:center; gap:4px;}
@@ -556,9 +559,7 @@ function eventsOf(memberId, d, ds){
   return tasksFor(memberId, d, ds).filter(t=>!isRoutine(t)).sort(sortByTime);
 }
 function isRoutine(t){
-  if(t.member_id !== "kyosuke") return false;
-  if((t.sort_order||0) >= 900) return false;
-  return DEFAULT_TASKS_KYOSUKE.some(x=>x.text === t.text);
+  return t.member_id === "kyosuke" && (t.sort_order||0) < 900 && ROUTINE.has(t.text);
 }
 
 const CAT_META = {
@@ -585,12 +586,14 @@ const DEFAULT_TASKS_KYOSUKE = [
   {cat:"other",  text:"食器洗い",                     st:null,    et:null},
   {cat:"daily",  text:"夜の振り返り・翌日タスク整理",   st:"22:30", et:null}
 ];
+const ROUTINE = new Set(DEFAULT_TASKS_KYOSUKE.map(t=>t.text));
 // 午前とみなす境界（この時刻より前に始まるタスクが午前）
 const MORNING_END = "12:00";
 
 let members = [], currentMember = "kyosuke", currentView = "list";
 let tasks = [], records = [], openDays = new Set(), calSelectedDay = null;
 let listScrolled = false;
+const calExpanded = new Set();
 
 const today = new Date();
 let YEAR = today.getFullYear(), MONTH = today.getMonth();
@@ -646,10 +649,11 @@ function jumpMonth(v){
 }
 async function afterMonthChange(){
   refreshMonthVars();
-  openDays.clear(); calSelectedDay = null; listScrolled = true;
+  calSelectedDay = null; listScrolled = true;
+  const y = window.scrollY;
   document.getElementById("app").innerHTML = '<div class="status">読み込み中...</div>';
   await loadMonth();
-  window.scrollTo(0,0);
+  window.scrollTo(0, y);
 }
 
 async function loadMonth(){
@@ -740,23 +744,25 @@ function tasksFor(memberId, d, ds){
 }
 
 function switchMember(id){
+  const y = window.scrollY;
   currentMember = id;
-  openDays.clear();
   renderMemberTabs();
   render();
-  window.scrollTo(0,0);
+  window.scrollTo(0, y);
 }
 function switchView(v){
   currentView = v;
   document.querySelectorAll(".view-tab").forEach(b=>
     b.classList.toggle("active", b.dataset.view===v));
   render();
-  window.scrollTo(0,0);
 }
 function render(){
+  const y = window.scrollY;
   if(currentView==="list") renderList();
   else if(currentView==="cal") renderCalendar();
   else renderViz();
+  // 再描画で位置が飛ばないよう戻す
+  if(window.scrollY !== y) window.scrollTo(0, y);
 }
 
 // ===== リスト =====
@@ -803,7 +809,7 @@ function renderList(){
     </div>`;
   }
   document.getElementById("app").innerHTML = html;
-  if(td>0 && !listScrolled){
+  if(td>0 && !listScrolled && currentView==="list"){
     listScrolled = true;
     const el = document.getElementById("day-"+td);
     if(el) setTimeout(()=>el.scrollIntoView({behavior:"smooth", block:"center"}), 120);
@@ -1350,12 +1356,18 @@ function renderCalendar(){
     members.forEach(m=>{
       eventsOf(m.id, d, ds).forEach(t=>evs.push({t, m}));
     });
-    let chips = evs.slice(0,3).map(e=>{
+    const expanded = calExpanded.has(d);
+    const shown = expanded ? evs : evs.slice(0,3);
+    let chips = shown.map(e=>{
       const tm = e.t.start_time ? e.t.start_time.slice(0,5)+" " : "";
       return `<div class="ev-chip ${e.t.done?'done':''}" style="--c:${e.m.color}">
-        <i></i><span>${esc(tm + e.t.text)}</span></div>`;
+        <span>${esc(tm + e.t.text)}</span></div>`;
     }).join("");
-    if(evs.length > 3) chips += `<div class="ev-more">+${evs.length-3}</div>`;
+    if(evs.length > 3){
+      chips += expanded
+        ? `<div class="ev-more" onclick="toggleEv(event,${d})">閉じる</div>`
+        : `<div class="ev-more" onclick="toggleEv(event,${d})">+${evs.length-3} もっと見る</div>`;
+    }
 
     // 残り件数（小さく）
     let dots = "";
@@ -1407,6 +1419,11 @@ function renderCalDetail(d){
 }
 
 function selectCalDay(d){ calSelectedDay = d; renderCalendar(); }
+function toggleEv(e, d){
+  e.stopPropagation();
+  if(calExpanded.has(d)) calExpanded.delete(d); else calExpanded.add(d);
+  renderCalendar();
+}
 
 // ===== 可視化 =====
 function renderViz(){
