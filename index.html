@@ -3,63 +3,51 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>月間タスク管理｜奈良</title>
+<title>タスク管理</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
-    --bg: #12181c;
-    --panel: #1a2126;
-    --panel2: #212a30;
-    --line: #2b363c;
-    --ink: #eef2f0;
-    --sub: #93a3a6;
-    --gold: #d4a94c;
-    --gold-dim: #7a6a3a;
-    --green: #4caf7d;
-    --red: #d97066;
-    --uber: #4a90d9;
-    --eigyou: #9b7fd4;
-    --nomigo: #d4a94c;
-    --daily: #6b7a80;
+    --bg:#12181c; --panel:#1a2126; --panel2:#212a30; --line:#2b363c;
+    --ink:#eef2f0; --sub:#93a3a6; --gold:#d4a94c; --green:#4caf7d; --red:#d97066;
+    --uber:#4a90d9; --eigyou:#9b7fd4; --daily:#6b7a80;
   }
   *{box-sizing:border-box;}
-  body{
-    margin:0;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: "Hiragino Sans", "Noto Sans JP", -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    padding-bottom: 60px;
-  }
-  header{
-    padding: 28px 20px 20px;
-    border-bottom: 1px solid var(--line);
-    background: linear-gradient(180deg, #171f23, var(--bg));
-  }
-  .title-row{display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px;}
-  h1{
-    font-size: 22px;
-    margin:0;
-    letter-spacing: 0.02em;
-    font-weight: 700;
-  }
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Hiragino Sans","Noto Sans JP",-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased; padding-bottom:60px;}
+
+  header{padding:22px 16px 14px; border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#171f23,var(--bg));}
+  h1{font-size:20px; margin:0 0 14px; font-weight:700;}
   h1 .accent{color:var(--gold);}
-  .month-nav{display:flex; align-items:center; gap:10px; font-size:14px; color:var(--sub);}
-  .month-nav button{
-    background: var(--panel2); border:1px solid var(--line); color:var(--ink);
-    border-radius:8px; padding:6px 12px; font-size:15px; cursor:pointer;
+
+  /* メンバー切り替え */
+  .member-tabs{display:flex; gap:8px; margin-bottom:14px;}
+  .member-tab{
+    flex:1; background:var(--panel); border:1px solid var(--line);
+    border-radius:10px; padding:9px 4px; text-align:center;
+    font-size:14px; color:var(--sub); cursor:pointer; font-weight:600;
   }
-  .goal-strip{
-    display:flex; gap:10px; margin-top:18px; overflow-x:auto; padding-bottom:4px;
+  .member-tab.active{background:var(--panel2); color:var(--ink);}
+  .member-tab.active[data-m="kyosuke"]{border-color:var(--gold); color:var(--gold);}
+  .member-tab.active[data-m="sister"]{border-color:var(--eigyou); color:var(--eigyou);}
+  .member-tab.active[data-m="mother"]{border-color:var(--uber); color:var(--uber);}
+
+  /* ビュー切り替え */
+  .view-tabs{display:flex; gap:6px; font-size:13px;}
+  .view-tab{
+    padding:7px 14px; border-radius:8px; background:transparent;
+    border:1px solid var(--line); color:var(--sub); cursor:pointer;
   }
-  .goal-card{
-    flex: 1 1 0; min-width:130px;
-    background: var(--panel);
-    border:1px solid var(--line);
-    border-radius:12px;
-    padding:12px 14px;
-  }
-  .goal-card .label{font-size:11px; color:var(--sub); letter-spacing:0.03em;}
-  .goal-card .value{font-size:19px; font-weight:700; margin-top:4px;}
+  .view-tab.active{background:var(--gold); border-color:var(--gold); color:#1a1305; font-weight:700;}
+
+  main{padding:16px 14px 40px; max-width:760px; margin:0 auto;}
+
+  .goal-strip{display:flex; gap:10px; margin-bottom:16px; overflow-x:auto;}
+  .goal-card{flex:1 1 0; min-width:120px; background:var(--panel);
+    border:1px solid var(--line); border-radius:12px; padding:11px 13px;}
+  .goal-card .label{font-size:11px; color:var(--sub);}
+  .goal-card .value{font-size:18px; font-weight:700; margin-top:3px;}
   .goal-card.uber .value{color:var(--uber);}
   .goal-card.eigyou .value{color:var(--eigyou);}
   .goal-card.total .value{color:var(--gold);}
@@ -67,428 +55,538 @@
   .goal-card .sub.remain{color:var(--red); font-weight:600;}
   .goal-card .sub.remain.achieved{color:var(--green);}
 
-  main{padding: 18px 14px 40px; max-width: 720px; margin:0 auto;}
-
-  .day-block{
-    background: var(--panel);
-    border:1px solid var(--line);
-    border-radius:14px;
-    margin-bottom:12px;
-    overflow:hidden;
-  }
-  .day-head{
-    display:flex; align-items:center; justify-content:space-between;
-    padding: 13px 16px;
-    cursor:pointer;
-    user-select:none;
-  }
-  .day-head:active{background: var(--panel2);}
+  .day-block{background:var(--panel); border:1px solid var(--line);
+    border-radius:14px; margin-bottom:10px; overflow:hidden;}
+  .day-head{display:flex; align-items:center; justify-content:space-between;
+    padding:12px 15px; cursor:pointer; user-select:none;}
   .day-head .left{display:flex; align-items:center; gap:10px;}
-  .day-num{
-    font-size:17px; font-weight:700;
-    width:38px; text-align:center;
-  }
-  .day-num.today{color: var(--gold);}
-  .day-weekday{font-size:11px; color:var(--sub); width:18px;}
-  .day-progress-ring{
-    width:30px; height:30px; flex-shrink:0;
-  }
-  .day-money{font-size:12px; color:var(--sub);}
-  .day-money b{color:var(--ink); font-weight:600;}
-  .chevron{color:var(--sub); font-size:13px; transition: transform 0.2s;}
-  .day-block.open .chevron{transform: rotate(90deg);}
+  .day-num{font-size:17px; font-weight:700; width:34px; text-align:center;}
+  .day-num.today{color:var(--gold);}
+  .day-weekday{font-size:11px; color:var(--sub); width:16px;}
+  .day-meta{font-size:11.5px; color:var(--sub);}
+  .day-meta b{color:var(--ink); font-weight:600;}
+  .chevron{color:var(--sub); font-size:12px; transition:transform .2s;}
+  .day-block.open .chevron{transform:rotate(90deg);}
+  .day-progress-bar{height:4px; background:var(--line); border-radius:2px;
+    margin-top:7px; width:130px; overflow:hidden;}
+  .day-progress-fill{height:100%; background:var(--green); transition:width .25s;}
 
-  .day-body{
-    display:none;
-    padding: 4px 16px 16px;
-    border-top:1px solid var(--line);
-  }
+  .day-body{display:none; padding:2px 15px 15px; border-top:1px solid var(--line);}
   .day-block.open .day-body{display:block;}
 
-  .money-target{
-    display:flex; gap:8px; margin: 12px 0 14px;
-    font-size:12px;
-  }
-  .money-target span{
-    background: var(--panel2); border-radius:8px; padding:5px 10px; color:var(--sub);
-  }
-  .money-target b{color:var(--ink);}
-
-  .section-label{
-    font-size:11px; letter-spacing:0.06em; color:var(--sub);
-    margin: 14px 0 6px; display:flex; align-items:center; gap:6px;
-  }
+  .section-label{font-size:11px; letter-spacing:.05em; color:var(--sub);
+    margin:13px 0 5px; display:flex; align-items:center; gap:6px;}
   .dot{width:7px; height:7px; border-radius:50%; display:inline-block;}
-  .dot.uber{background:var(--uber);}
-  .dot.eigyou{background:var(--eigyou);}
-  .dot.nomigo{background:var(--nomigo);}
-  .dot.daily{background:var(--daily);}
+  .dot.uber{background:var(--uber);} .dot.eigyou{background:var(--eigyou);}
+  .dot.daily{background:var(--daily);} .dot.other{background:var(--gold);}
 
-  .task{
-    display:flex; align-items:flex-start; gap:10px;
-    padding: 9px 2px;
-    border-bottom: 1px solid #ffffff08;
-  }
+  .task{display:flex; align-items:flex-start; gap:10px; padding:8px 2px;
+    border-bottom:1px solid #ffffff08;}
   .task:last-child{border-bottom:none;}
-  .task input[type=checkbox]{
-    appearance:none; -webkit-appearance:none;
-    width:20px; height:20px; min-width:20px;
-    border:1.5px solid var(--sub);
-    border-radius:6px;
-    margin-top:1px;
-    cursor:pointer;
-    position:relative;
-    background: transparent;
-  }
-  .task input[type=checkbox]:checked{
-    background: var(--green);
-    border-color: var(--green);
-  }
-  .task input[type=checkbox]:checked::after{
-    content:"✓";
-    position:absolute; top:50%; left:50%;
-    transform:translate(-50%,-58%);
-    color:#0c1a12; font-size:13px; font-weight:700;
-  }
-  .task label{
-    font-size:14.5px; line-height:1.5; flex:1;
-    cursor:pointer;
-  }
-  .task.done label{color:var(--sub); text-decoration: line-through; text-decoration-color: #ffffff30;}
+  .task input[type=checkbox]{appearance:none; -webkit-appearance:none;
+    width:20px; height:20px; min-width:20px; border:1.5px solid var(--sub);
+    border-radius:6px; margin-top:1px; cursor:pointer; position:relative; background:transparent;}
+  .task input[type=checkbox]:checked{background:var(--green); border-color:var(--green);}
+  .task input[type=checkbox]:checked::after{content:"✓"; position:absolute;
+    top:50%; left:50%; transform:translate(-50%,-58%); color:#0c1a12;
+    font-size:13px; font-weight:700;}
+  .task label{font-size:14.5px; line-height:1.5; flex:1; cursor:pointer;}
+  .task.done label{color:var(--sub); text-decoration:line-through; text-decoration-color:#ffffff30;}
+  .task .del{background:none; border:none; color:var(--sub); font-size:16px;
+    cursor:pointer; padding:0 4px;}
 
-  .record-row{
-    margin: 8px 0 4px;
-  }
-  .record-row.two-col{
-    display:flex; gap:10px;
-  }
+  .record-row{margin:8px 0 4px;}
+  .record-row.two-col{display:flex; gap:10px;}
   .record-row.two-col > div{flex:1;}
-  .record-label{
-    font-size:12px; color:var(--sub); display:block; margin-bottom:4px;
-  }
-  .record-input{
-    width:100%; background: var(--panel2); border:1px solid var(--line);
-    border-radius:8px; padding:8px 10px; color:var(--ink); font-size:14px;
-  }
-  .record-hint{
-    font-size:11.5px; color:var(--sub); margin-top:6px;
-  }
+  .record-label{font-size:12px; color:var(--sub); display:block; margin-bottom:4px;}
+  .record-input{width:100%; background:var(--panel2); border:1px solid var(--line);
+    border-radius:8px; padding:8px 10px; color:var(--ink); font-size:14px;}
+  .record-hint{font-size:11.5px; color:var(--sub); margin-top:6px;}
 
-  .add-row{
-    display:flex; gap:8px; margin-top:8px;
-  }
-  .add-row input{
-    flex:1; background: var(--panel2); border:1px solid var(--line);
-    border-radius:8px; padding:8px 10px; color:var(--ink); font-size:13.5px;
-  }
-  .add-row select{
-    background: var(--panel2); border:1px solid var(--line);
-    border-radius:8px; padding:8px 8px; color:var(--ink); font-size:13px;
-  }
-  .add-row button{
-    background: var(--gold); border:none; color:#1a1305; font-weight:700;
-    border-radius:8px; padding:8px 14px; font-size:13.5px; cursor:pointer;
-  }
+  .add-row{display:flex; gap:7px; margin-top:9px;}
+  .add-row input{flex:1; background:var(--panel2); border:1px solid var(--line);
+    border-radius:8px; padding:8px 10px; color:var(--ink); font-size:13.5px;}
+  .add-row select{background:var(--panel2); border:1px solid var(--line);
+    border-radius:8px; padding:8px 6px; color:var(--ink); font-size:13px;}
+  .add-row button{background:var(--gold); border:none; color:#1a1305;
+    font-weight:700; border-radius:8px; padding:8px 13px; font-size:13.5px; cursor:pointer;}
 
-  .day-progress-bar{
-    height:4px; background:var(--line); border-radius:2px; margin-top:8px; overflow:hidden;
-  }
-  .day-progress-fill{height:100%; background:var(--green); width:0%; transition:width 0.25s;}
+  /* 可視化 */
+  .viz-section{background:var(--panel); border:1px solid var(--line);
+    border-radius:14px; padding:16px; margin-bottom:14px;}
+  .viz-title{font-size:14px; font-weight:700; margin:0 0 14px;}
+  .viz-sub{font-size:11.5px; color:var(--sub); font-weight:400; margin-left:6px;}
 
-  .footer-note{
-    text-align:center; color:var(--sub); font-size:11.5px; margin-top:22px; line-height:1.7;
-  }
+  .member-row{display:flex; align-items:center; gap:10px; margin-bottom:11px;}
+  .member-name{font-size:13px; width:52px; flex-shrink:0;}
+  .member-bar-wrap{flex:1; height:22px; background:var(--panel2);
+    border-radius:5px; overflow:hidden; position:relative;}
+  .member-bar{height:100%; border-radius:5px; transition:width .3s;}
+  .member-val{font-size:12.5px; width:88px; text-align:right; flex-shrink:0;}
 
-  .reset-btn{
-    display:block; margin: 26px auto 0; background:transparent; border:1px solid var(--line);
-    color:var(--sub); font-size:12px; padding:8px 16px; border-radius:8px; cursor:pointer;
-  }
+  .bar-chart{display:flex; align-items:flex-end; gap:2px; height:110px;
+    padding-top:8px; overflow-x:auto;}
+  .bar-col{flex:1; min-width:8px; display:flex; flex-direction:column;
+    justify-content:flex-end; align-items:center; height:100%;}
+  .bar{width:100%; background:var(--gold); border-radius:2px 2px 0 0; min-height:1px;}
+  .bar-label{font-size:8px; color:var(--sub); margin-top:3px;}
+
+  .stat-grid{display:flex; gap:10px; flex-wrap:wrap;}
+  .stat{flex:1 1 44%; background:var(--panel2); border-radius:10px; padding:11px 13px;}
+  .stat .l{font-size:11px; color:var(--sub);}
+  .stat .v{font-size:17px; font-weight:700; margin-top:3px;}
+
+  .status{text-align:center; color:var(--sub); font-size:12px; padding:24px;}
+  .footer-note{text-align:center; color:var(--sub); font-size:11px;
+    margin-top:20px; line-height:1.7;}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="title-row">
-    <h1>今月の<span class="accent">タスク</span>管理</h1>
-    <div class="month-nav">
-      <span id="monthLabel">2026年8月</span>
-    </div>
-  </div>
-  <div class="goal-strip">
-    <div class="goal-card uber">
-      <div class="label">Uber営業代行</div>
-      <div class="value">¥150,000</div>
-      <div class="sub">実績 <span id="uberActual">¥0</span></div>
-      <div class="sub remain">残り <span id="uberRemain">¥150,000</span></div>
-    </div>
-    <div class="goal-card eigyou">
-      <div class="label">営業代行(Store Uplifted)</div>
-      <div class="value">¥100,000</div>
-      <div class="sub">月13件アポ目標／実績 <span id="eigyouActual">0件・¥0</span></div>
-      <div class="sub remain">残り <span id="eigyouRemain">¥100,000</span></div>
-    </div>
-    <div class="goal-card total">
-      <div class="label">月間合計目標</div>
-      <div class="value">¥250,000</div>
-      <div class="sub">実績合計 <span id="totalActual">¥0</span></div>
-      <div class="sub remain">残り <span id="totalRemain">¥250,000</span></div>
-    </div>
+  <h1>今月の<span class="accent">タスク</span>管理 <span style="font-size:13px;color:var(--sub);font-weight:400;" id="monthLabel"></span></h1>
+  <div class="member-tabs" id="memberTabs"></div>
+  <div class="view-tabs">
+    <button class="view-tab active" data-view="list" onclick="switchView('list')">タスク</button>
+    <button class="view-tab" data-view="viz" onclick="switchView('viz')">可視化</button>
   </div>
 </header>
 
-<main id="dayList"></main>
+<main id="app"><div class="status">読み込み中...</div></main>
 
 <div class="footer-note">
-  データはこの端末のブラウザ内に保存されます。<br>
-  タップで開閉、チェックでその日のタスク完了。
+  家族全員のデータが自動で共有されます。<br>
+  タップで開閉、チェックでタスク完了。
 </div>
-<button class="reset-btn" onclick="if(confirm('全てのチェックをリセットしますか？')){resetAll()}">全チェックをリセット</button>
 
 <script>
-const DAYS_IN_MONTH = 31;
-const MONTH_KEY = "2026-08";
-const UBER_DAILY = Math.round(150000/31);
-const EIGYOU_DAILY = Math.round(100000/31);
+const SUPABASE_URL = "https://imocbgongkbdcnpcorgu.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imltb2NiZ29uZ2tiZGNucGNvcmd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMjYyODIsImV4cCI6MjEwMDcwMjI4Mn0.7n2Exeju8DoXbkHrL6gCly12G51570gaOQNPRvH9wts";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// カテゴリ別デフォルトタスク（毎日共通のひな形）
-const DEFAULT_TASKS = {
-  daily: [
-    "起床・体調チェック・朝食",
-    "今日の売上目標を確認する",
-    "皿洗い",
-    "夜の振り返り・翌日タスク整理"
-  ],
-  uber: [
-    "Uber案件：当日の稼働/対応を実施",
-    "Uber案件：進捗・売上を記録"
-  ],
-  eigyou: [
-    "Store Uplifted：新規アプローチ（架電/DM/訪問）",
-    "Store Uplifted：既存見込み客フォロー"
-  ],
-  nomigo: [
-    "Nomi Go：ローンチ準備タスクを1つ進める（届出・登録・テスト等）"
-  ]
+// ===== 目標設定（享祐のみ金額目標あり） =====
+const GOALS = {
+  kyosuke: { uber: 150000, eigyou: 100000 }
+};
+const EIGYOU_SELF_YEN = 8000;
+const EIGYOU_TEAM_YEN = 3000;
+
+const CAT_META = {
+  daily:  {label:"日常", dot:"daily"},
+  uber:   {label:"Uber営業代行", dot:"uber"},
+  eigyou: {label:"営業代行", dot:"eigyou"},
+  other:  {label:"その他", dot:"other"}
 };
 
-function loadData(){
-  const raw = localStorage.getItem("taskmgr_"+MONTH_KEY);
-  if(raw) return JSON.parse(raw);
-  const data = {};
-  for(let d=1; d<=DAYS_IN_MONTH; d++){
-    data[d] = {
-      tasks: [
-        ...DEFAULT_TASKS.daily.map(t=>({cat:"daily", text:t, done:false})),
-        ...DEFAULT_TASKS.uber.map(t=>({cat:"uber", text:t, done:false})),
-        ...DEFAULT_TASKS.eigyou.map(t=>({cat:"eigyou", text:t, done:false})),
-        ...DEFAULT_TASKS.nomigo.map(t=>({cat:"nomigo", text:t, done:false})),
-      ],
-      uberSales: "",
-      eigyouSelf: "",
-      eigyouTeam: ""
-    };
-  }
-  return data;
+// デフォルトタスク（享祐のみ。姉・母は自由追加）
+const DEFAULT_TASKS_KYOSUKE = [
+  {cat:"daily",  text:"起床・体調チェック・朝食"},
+  {cat:"daily",  text:"今日の売上目標を確認する"},
+  {cat:"daily",  text:"皿洗い"},
+  {cat:"daily",  text:"夜の振り返り・翌日タスク整理"},
+  {cat:"uber",   text:"Uber案件：当日の稼働/対応を実施"},
+  {cat:"uber",   text:"Uber案件：進捗・売上を記録"},
+  {cat:"eigyou", text:"新規アプローチ（架電/DM/訪問）"},
+  {cat:"eigyou", text:"既存見込み客フォロー"}
+];
+
+let members = [];
+let currentMember = "kyosuke";
+let currentView = "list";
+let tasks = [];      // 全メンバー分
+let records = [];    // 全メンバー分
+let openDays = new Set();
+
+const now = new Date();
+const YEAR = now.getFullYear();
+const MONTH = now.getMonth(); // 0-indexed
+const DAYS_IN_MONTH = new Date(YEAR, MONTH+1, 0).getDate();
+const WD = ["日","月","火","水","木","金","土"];
+
+document.getElementById("monthLabel").textContent = `${YEAR}年${MONTH+1}月`;
+
+function dateStr(d){
+  return `${YEAR}-${String(MONTH+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
 }
 
-let data = loadData();
-
-function save(){
-  localStorage.setItem("taskmgr_"+MONTH_KEY, JSON.stringify(data));
-}
-
-function resetAll(){
-  localStorage.removeItem("taskmgr_"+MONTH_KEY);
-  data = loadData();
+async function init(){
+  const { data: mem, error: e1 } = await sb.from("members").select("*").order("sort_order");
+  if(e1){ showError(e1); return; }
+  members = mem;
+  renderMemberTabs();
+  await loadData();
   render();
 }
 
-const catMeta = {
-  daily: {label:"日常", dot:"daily"},
-  uber: {label:"Uber営業代行", dot:"uber"},
-  eigyou: {label:"営業代行 (Store Uplifted)", dot:"eigyou"},
-  nomigo: {label:"Nomi Go（ローンチ準備）", dot:"nomigo"}
-};
+async function loadData(){
+  const from = dateStr(1), to = dateStr(DAYS_IN_MONTH);
+  const [t, r] = await Promise.all([
+    sb.from("tasks").select("*").gte("task_date", from).lte("task_date", to).order("sort_order"),
+    sb.from("daily_records").select("*").gte("record_date", from).lte("record_date", to)
+  ]);
+  if(t.error){ showError(t.error); return; }
+  tasks = t.data || [];
+  records = r.data || [];
 
-const weekdayNames = ["日","月","火","水","木","金","土"];
+  // 享祐の今月分のデフォルトタスクが未作成なら一括作成
+  const hasKyosuke = tasks.some(x => x.member_id === "kyosuke");
+  if(!hasKyosuke){
+    const rows = [];
+    for(let d=1; d<=DAYS_IN_MONTH; d++){
+      DEFAULT_TASKS_KYOSUKE.forEach((dt, i) => {
+        rows.push({member_id:"kyosuke", task_date:dateStr(d), category:dt.cat, text:dt.text, sort_order:i});
+      });
+    }
+    const { data, error } = await sb.from("tasks").insert(rows).select();
+    if(!error) tasks = tasks.concat(data);
+  }
+}
+
+function showError(e){
+  document.getElementById("app").innerHTML =
+    `<div class="status">読み込みに失敗しました。<br>${e.message || ""}<br>画面を再読み込みしてください。</div>`;
+}
+
+function renderMemberTabs(){
+  const el = document.getElementById("memberTabs");
+  el.innerHTML = members.map(m =>
+    `<div class="member-tab ${m.id===currentMember?'active':''}" data-m="${m.id}"
+      onclick="switchMember('${m.id}')">${m.name}</div>`
+  ).join("");
+}
+
+function switchMember(id){
+  currentMember = id;
+  openDays.clear();
+  renderMemberTabs();
+  render();
+  window.scrollTo(0,0);
+}
+
+function switchView(v){
+  currentView = v;
+  document.querySelectorAll(".view-tab").forEach(b =>
+    b.classList.toggle("active", b.dataset.view === v));
+  render();
+  window.scrollTo(0,0);
+}
 
 function render(){
-  const list = document.getElementById("dayList");
-  list.innerHTML = "";
-  const today = new Date();
-  const isThisMonth = (today.getFullYear()===2026 && today.getMonth()===7); // 8月=index7
-  const todayDate = today.getDate();
+  if(currentView === "list") renderList();
+  else renderViz();
+}
+
+// ===== タスク一覧 =====
+function renderList(){
+  const app = document.getElementById("app");
+  let html = "";
+
+  if(currentMember === "kyosuke"){
+    html += renderGoalStrip();
+  }
+
+  const today = (now.getFullYear()===YEAR && now.getMonth()===MONTH) ? now.getDate() : -1;
 
   for(let d=1; d<=DAYS_IN_MONTH; d++){
-    const dayData = data[d];
-    const total = dayData.tasks.length;
-    const doneCount = dayData.tasks.filter(t=>t.done).length;
-    const pct = total ? Math.round(doneCount/total*100) : 0;
+    const ds = dateStr(d);
+    const dayTasks = tasks.filter(t => t.member_id===currentMember && t.task_date===ds);
+    const rec = getRecord(currentMember, ds);
+    const total = dayTasks.length;
+    const done = dayTasks.filter(t=>t.done).length;
+    const pct = total ? Math.round(done/total*100) : 0;
+    const isOpen = openDays.has(d);
+    const wd = WD[new Date(YEAR, MONTH, d).getDay()];
 
-    const dateObj = new Date(2026, 7, d);
-    const wd = weekdayNames[dateObj.getDay()];
+    let metaHtml = `${done}/${total} 完了`;
+    if(currentMember === "kyosuke"){
+      const yen = rec.uber_sales + rec.eigyou_self*EIGYOU_SELF_YEN + rec.eigyou_team*EIGYOU_TEAM_YEN;
+      metaHtml = `${done}/${total} 完了 ／ 売上 <b>¥${yen.toLocaleString()}</b>`;
+    }
 
-    const block = document.createElement("div");
-    block.className = "day-block";
-    block.id = "day-"+d;
-
-    const isToday = isThisMonth && d===todayDate;
-
-    block.innerHTML = `
+    html += `
+    <div class="day-block ${isOpen?'open':''}" id="day-${d}">
       <div class="day-head" onclick="toggleDay(${d})">
         <div class="left">
-          <div class="day-num ${isToday?'today':''}">${d}</div>
+          <div class="day-num ${d===today?'today':''}">${d}</div>
           <div class="day-weekday">${wd}</div>
           <div>
-            <div class="day-money">Uber <b>¥${UBER_DAILY.toLocaleString()}</b> ／ 営業代行 <b>¥${EIGYOU_DAILY.toLocaleString()}</b></div>
-            <div class="day-progress-bar" style="width:140px;"><div class="day-progress-fill" style="width:${pct}%;"></div></div>
+            <div class="day-meta">${metaHtml}</div>
+            <div class="day-progress-bar"><div class="day-progress-fill" style="width:${pct}%"></div></div>
           </div>
         </div>
         <div class="chevron">▶</div>
       </div>
-      <div class="day-body" id="body-${d}">
-        ${renderTasksByCat(d, dayData.tasks)}
+      <div class="day-body">
+        ${renderDayTasks(d, ds, dayTasks, rec)}
         <div class="add-row">
-          <select id="newcat-${d}">
+          <select id="cat-${d}">
             <option value="daily">日常</option>
             <option value="uber">Uber</option>
             <option value="eigyou">営業代行</option>
-            <option value="nomigo">Nomi Go</option>
+            <option value="other">その他</option>
           </select>
-          <input type="text" id="newtask-${d}" placeholder="タスクを追加...">
+          <input type="text" id="new-${d}" placeholder="タスクを追加...">
           <button onclick="addTask(${d})">追加</button>
         </div>
       </div>
-    `;
-    list.appendChild(block);
+    </div>`;
   }
-
-  updateSummary();
+  app.innerHTML = html;
 }
 
-function updateSummary(){
-  let uberTotal = 0;
-  let eigyouSelfTotal = 0;
-  let eigyouTeamTotal = 0;
-  for(let d=1; d<=DAYS_IN_MONTH; d++){
-    uberTotal += parseInt(data[d].uberSales)||0;
-    eigyouSelfTotal += parseInt(data[d].eigyouSelf)||0;
-    eigyouTeamTotal += parseInt(data[d].eigyouTeam)||0;
-  }
-  const eigyouYen = eigyouSelfTotal*8000 + eigyouTeamTotal*3000;
-  const eigyouCount = eigyouSelfTotal + eigyouTeamTotal;
+function renderGoalStrip(){
+  const g = GOALS.kyosuke;
+  let uber=0, self=0, team=0;
+  records.filter(r=>r.member_id==="kyosuke").forEach(r=>{
+    uber += r.uber_sales; self += r.eigyou_self; team += r.eigyou_team;
+  });
+  const eigyouYen = self*EIGYOU_SELF_YEN + team*EIGYOU_TEAM_YEN;
+  const totalYen = uber + eigyouYen;
 
-  document.getElementById("uberActual").textContent = "¥"+uberTotal.toLocaleString();
-  document.getElementById("eigyouActual").textContent = eigyouCount+"件・¥"+eigyouYen.toLocaleString();
-  document.getElementById("totalActual").textContent = "¥"+(uberTotal+eigyouYen).toLocaleString();
-
-  setRemain("uberRemain", 150000, uberTotal);
-  setRemain("eigyouRemain", 100000, eigyouYen);
-  setRemain("totalRemain", 250000, uberTotal+eigyouYen);
+  return `<div class="goal-strip">
+    <div class="goal-card uber">
+      <div class="label">Uber営業代行</div>
+      <div class="value">¥${g.uber.toLocaleString()}</div>
+      <div class="sub">実績 ¥${uber.toLocaleString()}</div>
+      ${remainHtml(g.uber, uber)}
+    </div>
+    <div class="goal-card eigyou">
+      <div class="label">営業代行</div>
+      <div class="value">¥${g.eigyou.toLocaleString()}</div>
+      <div class="sub">${self+team}件・¥${eigyouYen.toLocaleString()}</div>
+      ${remainHtml(g.eigyou, eigyouYen)}
+    </div>
+    <div class="goal-card total">
+      <div class="label">合計目標</div>
+      <div class="value">¥${(g.uber+g.eigyou).toLocaleString()}</div>
+      <div class="sub">実績 ¥${totalYen.toLocaleString()}</div>
+      ${remainHtml(g.uber+g.eigyou, totalYen)}
+    </div>
+  </div>`;
 }
 
-function setRemain(id, goal, actual){
-  const remain = goal - actual;
-  const el = document.getElementById(id);
-  if(remain <= 0){
-    el.textContent = "目標達成 +¥"+Math.abs(remain).toLocaleString();
-    el.parentElement.classList.add("achieved");
-  } else {
-    el.textContent = "¥"+remain.toLocaleString();
-    el.parentElement.classList.remove("achieved");
-  }
+function remainHtml(goal, actual){
+  const r = goal - actual;
+  if(r <= 0) return `<div class="sub remain achieved">達成 +¥${Math.abs(r).toLocaleString()}</div>`;
+  return `<div class="sub remain">残り ¥${r.toLocaleString()}</div>`;
 }
 
-function renderTasksByCat(d, tasks){
+function renderDayTasks(d, ds, dayTasks, rec){
   let html = "";
-  const dayData = data[d];
-  ["daily","uber","eigyou","nomigo"].forEach(cat=>{
-    const catTasks = tasks.map((t,i)=>({...t, idx:i})).filter(t=>t.cat===cat);
-    if(catTasks.length===0 && cat!=="uber" && cat!=="eigyou") return;
-    html += `<div class="section-label"><span class="dot ${catMeta[cat].dot}"></span>${catMeta[cat].label}</div>`;
-    catTasks.forEach(t=>{
-      html += `
-        <div class="task ${t.done?'done':''}">
-          <input type="checkbox" id="t-${d}-${t.idx}" ${t.done?'checked':''} onchange="toggleTask(${d}, ${t.idx})">
-          <label for="t-${d}-${t.idx}">${escapeHtml(t.text)}</label>
-        </div>
-      `;
+  ["daily","uber","eigyou","other"].forEach(cat=>{
+    const ct = dayTasks.filter(t=>t.category===cat);
+    const needRecord = currentMember==="kyosuke" && (cat==="uber"||cat==="eigyou");
+    if(ct.length===0 && !needRecord) return;
+
+    html += `<div class="section-label"><span class="dot ${CAT_META[cat].dot}"></span>${CAT_META[cat].label}</div>`;
+    ct.forEach(t=>{
+      html += `<div class="task ${t.done?'done':''}">
+        <input type="checkbox" id="t-${t.id}" ${t.done?'checked':''} onchange="toggleTask('${t.id}',${d})">
+        <label for="t-${t.id}">${esc(t.text)}</label>
+        <button class="del" onclick="delTask('${t.id}',${d})">×</button>
+      </div>`;
     });
-    if(cat==="uber"){
-      html += `
-        <div class="record-row">
-          <label class="record-label">当日のUber売上（円）</label>
-          <input type="number" inputmode="numeric" class="record-input" value="${dayData.uberSales}"
-            placeholder="例：5000" onchange="updateField(${d}, 'uberSales', this.value)">
-        </div>
-      `;
+
+    if(needRecord && cat==="uber"){
+      html += `<div class="record-row">
+        <label class="record-label">当日のUber売上（円）</label>
+        <input type="number" inputmode="numeric" class="record-input" value="${rec.uber_sales||''}"
+          placeholder="例：5000" onchange="saveRecord('${ds}',${d},'uber_sales',this.value)">
+      </div>`;
     }
-    if(cat==="eigyou"){
-      html += `
-        <div class="record-row two-col">
-          <div>
-            <label class="record-label">自分の成約数（件）</label>
-            <input type="number" inputmode="numeric" class="record-input" value="${dayData.eigyouSelf}"
-              placeholder="例：1" onchange="updateField(${d}, 'eigyouSelf', this.value)">
-          </div>
-          <div>
-            <label class="record-label">下の人の成約数（件）</label>
-            <input type="number" inputmode="numeric" class="record-input" value="${dayData.eigyouTeam}"
-              placeholder="例：1" onchange="updateField(${d}, 'eigyouTeam', this.value)">
-          </div>
+    if(needRecord && cat==="eigyou"){
+      const yen = rec.eigyou_self*EIGYOU_SELF_YEN + rec.eigyou_team*EIGYOU_TEAM_YEN;
+      html += `<div class="record-row two-col">
+        <div>
+          <label class="record-label">自分の成約数</label>
+          <input type="number" inputmode="numeric" class="record-input" value="${rec.eigyou_self||''}"
+            placeholder="0" onchange="saveRecord('${ds}',${d},'eigyou_self',this.value)">
         </div>
-        <div class="record-hint">当日の見込み金額：¥${calcEigyouYen(dayData).toLocaleString()}（自分8,000円×${dayData.eigyouSelf||0}＋下3,000円×${dayData.eigyouTeam||0}）</div>
-      `;
+        <div>
+          <label class="record-label">下の人の成約数</label>
+          <input type="number" inputmode="numeric" class="record-input" value="${rec.eigyou_team||''}"
+            placeholder="0" onchange="saveRecord('${ds}',${d},'eigyou_team',this.value)">
+        </div>
+      </div>
+      <div class="record-hint">当日の営業代行 見込み：¥${yen.toLocaleString()}</div>`;
     }
   });
   return html;
 }
 
-function calcEigyouYen(dayData){
-  const self = parseInt(dayData.eigyouSelf)||0;
-  const team = parseInt(dayData.eigyouTeam)||0;
-  return self*8000 + team*3000;
+function getRecord(memberId, ds){
+  const r = records.find(x=>x.member_id===memberId && x.record_date===ds);
+  return r || {uber_sales:0, eigyou_self:0, eigyou_team:0};
 }
 
-function updateField(d, field, value){
-  data[d][field] = value;
-  save();
-  render();
-  document.getElementById("day-"+d).classList.add("open");
-}
-
-function escapeHtml(str){
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
+function esc(s){
+  const d = document.createElement("div");
+  d.textContent = s;
+  return d.innerHTML;
 }
 
 function toggleDay(d){
-  const block = document.getElementById("day-"+d);
-  block.classList.toggle("open");
+  if(openDays.has(d)) openDays.delete(d); else openDays.add(d);
+  document.getElementById("day-"+d).classList.toggle("open");
 }
 
-function toggleTask(d, idx){
-  data[d].tasks[idx].done = !data[d].tasks[idx].done;
-  save();
-  render();
-  // 再描画後も開いた状態を維持
-  document.getElementById("day-"+d).classList.add("open");
+async function toggleTask(id, d){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  t.done = !t.done;
+  renderList();
+  await sb.from("tasks").update({done:t.done}).eq("id", id);
 }
 
-function addTask(d){
-  const input = document.getElementById("newtask-"+d);
-  const cat = document.getElementById("newcat-"+d).value;
+async function delTask(id, d){
+  tasks = tasks.filter(x=>x.id!==id);
+  renderList();
+  await sb.from("tasks").delete().eq("id", id);
+}
+
+async function addTask(d){
+  const input = document.getElementById("new-"+d);
+  const cat = document.getElementById("cat-"+d).value;
   const text = input.value.trim();
   if(!text) return;
-  data[d].tasks.push({cat, text, done:false});
-  save();
-  render();
-  document.getElementById("day-"+d).classList.add("open");
+  input.value = "";
+  const ds = dateStr(d);
+  const row = {member_id:currentMember, task_date:ds, category:cat, text, sort_order:999};
+  const { data, error } = await sb.from("tasks").insert(row).select().single();
+  if(!error){ tasks.push(data); renderList(); }
 }
 
-render();
-</script>
+async function saveRecord(ds, d, field, value){
+  const v = parseInt(value)||0;
+  let r = records.find(x=>x.member_id===currentMember && x.record_date===ds);
+  if(!r){
+    r = {member_id:currentMember, record_date:ds, uber_sales:0, eigyou_self:0, eigyou_team:0};
+    records.push(r);
+  }
+  r[field] = v;
+  renderList();
+  await sb.from("daily_records").upsert({
+    member_id:currentMember, record_date:ds,
+    uber_sales:r.uber_sales, eigyou_self:r.eigyou_self, eigyou_team:r.eigyou_team
+  }, {onConflict:"member_id,record_date"});
+}
 
+// ===== 可視化 =====
+function renderViz(){
+  const app = document.getElementById("app");
+
+  // 全体の売上（享祐のみ金額あり）
+  let totalYen = 0;
+  const memberYen = {}, memberDone = {}, memberTotal = {};
+  members.forEach(m => { memberYen[m.id]=0; memberDone[m.id]=0; memberTotal[m.id]=0; });
+
+  records.forEach(r=>{
+    const yen = r.uber_sales + r.eigyou_self*EIGYOU_SELF_YEN + r.eigyou_team*EIGYOU_TEAM_YEN;
+    memberYen[r.member_id] = (memberYen[r.member_id]||0) + yen;
+    totalYen += yen;
+  });
+  tasks.forEach(t=>{
+    memberTotal[t.member_id] = (memberTotal[t.member_id]||0) + 1;
+    if(t.done) memberDone[t.member_id] = (memberDone[t.member_id]||0) + 1;
+  });
+
+  const goalTotal = GOALS.kyosuke.uber + GOALS.kyosuke.eigyou;
+  const allDone = Object.values(memberDone).reduce((a,b)=>a+b,0);
+  const allTotal = Object.values(memberTotal).reduce((a,b)=>a+b,0);
+
+  // 日別売上（享祐）
+  const dailyYen = [];
+  for(let d=1; d<=DAYS_IN_MONTH; d++){
+    const r = getRecord("kyosuke", dateStr(d));
+    dailyYen.push(r.uber_sales + r.eigyou_self*EIGYOU_SELF_YEN + r.eigyou_team*EIGYOU_TEAM_YEN);
+  }
+  const maxYen = Math.max(...dailyYen, 1);
+
+  // 日別タスク完了数（全員合計）
+  const dailyDone = [];
+  for(let d=1; d<=DAYS_IN_MONTH; d++){
+    const ds = dateStr(d);
+    dailyDone.push(tasks.filter(t=>t.task_date===ds && t.done).length);
+  }
+  const maxDone = Math.max(...dailyDone, 1);
+
+  let html = "";
+
+  // 月間サマリー
+  html += `<div class="viz-section">
+    <div class="viz-title">月間サマリー<span class="viz-sub">${YEAR}年${MONTH+1}月</span></div>
+    <div class="stat-grid">
+      <div class="stat"><div class="l">今月の売上合計</div>
+        <div class="v" style="color:var(--gold)">¥${totalYen.toLocaleString()}</div></div>
+      <div class="stat"><div class="l">目標まで残り</div>
+        <div class="v" style="color:${totalYen>=goalTotal?'var(--green)':'var(--red)'}">
+          ${totalYen>=goalTotal ? '達成' : '¥'+(goalTotal-totalYen).toLocaleString()}</div></div>
+      <div class="stat"><div class="l">タスク完了（家族全体）</div>
+        <div class="v">${allDone} / ${allTotal}</div></div>
+      <div class="stat"><div class="l">達成率</div>
+        <div class="v" style="color:var(--green)">${allTotal?Math.round(allDone/allTotal*100):0}%</div></div>
+    </div>
+  </div>`;
+
+  // メンバー別 売上
+  html += `<div class="viz-section">
+    <div class="viz-title">メンバー別 売上<span class="viz-sub">今月</span></div>`;
+  const maxMemberYen = Math.max(...Object.values(memberYen), 1);
+  members.forEach(m=>{
+    const y = memberYen[m.id]||0;
+    const w = Math.round(y/maxMemberYen*100);
+    html += `<div class="member-row">
+      <div class="member-name">${m.name}</div>
+      <div class="member-bar-wrap"><div class="member-bar" style="width:${w}%;background:${m.color}"></div></div>
+      <div class="member-val">¥${y.toLocaleString()}</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // メンバー別 タスク達成率
+  html += `<div class="viz-section">
+    <div class="viz-title">メンバー別 タスク達成率<span class="viz-sub">今月</span></div>`;
+  members.forEach(m=>{
+    const tot = memberTotal[m.id]||0, dn = memberDone[m.id]||0;
+    const pct = tot ? Math.round(dn/tot*100) : 0;
+    html += `<div class="member-row">
+      <div class="member-name">${m.name}</div>
+      <div class="member-bar-wrap"><div class="member-bar" style="width:${pct}%;background:${m.color}"></div></div>
+      <div class="member-val">${dn}/${tot}（${pct}%）</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // 日別売上グラフ
+  html += `<div class="viz-section">
+    <div class="viz-title">日別 売上<span class="viz-sub">最大 ¥${maxYen.toLocaleString()}</span></div>
+    <div class="bar-chart">`;
+  dailyYen.forEach((y,i)=>{
+    const h = Math.round(y/maxYen*100);
+    html += `<div class="bar-col">
+      <div class="bar" style="height:${h}%;background:var(--gold)"></div>
+      <div class="bar-label">${i+1}</div>
+    </div>`;
+  });
+  html += `</div></div>`;
+
+  // 日別タスク完了数
+  html += `<div class="viz-section">
+    <div class="viz-title">日別 タスク完了数<span class="viz-sub">家族全体・最大 ${maxDone}件</span></div>
+    <div class="bar-chart">`;
+  dailyDone.forEach((c,i)=>{
+    const h = Math.round(c/maxDone*100);
+    html += `<div class="bar-col">
+      <div class="bar" style="height:${h}%;background:var(--green)"></div>
+      <div class="bar-label">${i+1}</div>
+    </div>`;
+  });
+  html += `</div></div>`;
+
+  app.innerHTML = html;
+}
+
+init();
+</script>
 </body>
 </html>
