@@ -92,6 +92,21 @@
 
   main{padding:16px 14px 40px; max-width:760px; margin:0 auto;}
 
+  /* ペース表示 */
+  .pace-box{
+    background:linear-gradient(135deg,#2f8fd6,#5fb3e8); color:#fff;
+    border-radius:14px; padding:13px 15px; margin-bottom:12px;
+    box-shadow:0 6px 18px rgba(47,143,214,.28);
+  }
+  .pace-top{display:flex; align-items:baseline; justify-content:space-between; gap:10px;}
+  .pace-msg{font-size:13px; font-weight:600;}
+  .pace-msg b{font-size:16px; font-weight:800;}
+  .pace-pct{font-size:17px; font-weight:800;}
+  .pace-bar{height:6px; background:rgba(255,255,255,.3); border-radius:3px;
+    margin-top:9px; overflow:hidden;}
+  .pace-fill{height:100%; background:#fff; border-radius:3px; transition:width .35s;}
+  .goal-card .sub.pace{color:var(--accent); font-weight:700; margin-top:4px;}
+
   /* 目標カード */
   .goal-strip{display:flex; gap:9px; margin-bottom:16px;}
   .goal-card{flex:1 1 0; min-width:0; background:var(--panel);
@@ -183,6 +198,16 @@
     border-radius:8px; padding:9px 6px; color:var(--ink); font-size:12.5px;}
   .add-row button{background:var(--accent); border:none; color:#fff;
     font-weight:700; border-radius:8px; padding:9px 14px; font-size:13.5px; cursor:pointer;}
+  .time-row{display:flex; align-items:center; gap:7px; margin-top:7px;}
+  .time-lbl{font-size:11.5px; color:var(--sub); flex-shrink:0;}
+  .time-in{flex:1; min-width:0; background:var(--panel2); border:1px solid var(--line);
+    border-radius:8px; padding:7px 8px; color:var(--ink); font-size:13px;}
+  .time-sep{font-size:12px; color:var(--sub);}
+  .task-time{
+    display:inline-block; background:var(--accent-soft); color:var(--accent);
+    font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:6px;
+    margin-right:7px; vertical-align:1px;
+  }
   .repeat-row{margin-top:7px;}
   .repeat-row select{width:100%; background:var(--panel2);
     border:1px solid var(--line); border-radius:8px; padding:8px 10px;
@@ -589,6 +614,12 @@ function renderAddRow(d){
       <input type="text" id="new-${d}" placeholder="タスクを追加...">
       <button onclick="addTask(${d})">追加</button>
     </div>
+    <div class="time-row">
+      <span class="time-lbl">時間（任意）</span>
+      <input type="time" id="st-${d}" class="time-in">
+      <span class="time-sep">〜</span>
+      <input type="time" id="et-${d}" class="time-in">
+    </div>
     <div class="repeat-row">
       <select id="rep-${d}">
         <option value="once">この日だけ</option>
@@ -606,18 +637,58 @@ function renderGoalStrip(){
     uber+=r.uber_sales; self+=r.eigyou_self; team+=r.eigyou_team;
   });
   const ey = self*EIGYOU_SELF_YEN + team*EIGYOU_TEAM_YEN;
-  return `<div class="goal-strip">
+  const goalAll = g.uber + g.eigyou;
+  const actAll = uber + ey;
+  const left = daysLeft();
+
+  return `${renderPaceBar(goalAll, actAll, left)}
+  <div class="goal-strip">
     <div class="goal-card uber"><div class="label">Uber営業代行</div>
       <div class="value">¥${g.uber.toLocaleString()}</div>
-      <div class="sub">実績 ¥${uber.toLocaleString()}</div>${remainHtml(g.uber,uber)}</div>
+      <div class="sub">実績 ¥${uber.toLocaleString()}</div>${remainHtml(g.uber,uber)}
+      <div class="sub pace">1日 ¥${perDay(g.uber-uber, left).toLocaleString()}</div></div>
     <div class="goal-card eigyou"><div class="label">営業代行</div>
       <div class="value">¥${g.eigyou.toLocaleString()}</div>
-      <div class="sub">${self+team}件・¥${ey.toLocaleString()}</div>${remainHtml(g.eigyou,ey)}</div>
+      <div class="sub">${self+team}件・¥${ey.toLocaleString()}</div>${remainHtml(g.eigyou,ey)}
+      <div class="sub pace">1日 ¥${perDay(g.eigyou-ey, left).toLocaleString()}</div></div>
     <div class="goal-card total"><div class="label">合計目標</div>
-      <div class="value">¥${(g.uber+g.eigyou).toLocaleString()}</div>
-      <div class="sub">実績 ¥${(uber+ey).toLocaleString()}</div>${remainHtml(g.uber+g.eigyou,uber+ey)}</div>
+      <div class="value">¥${goalAll.toLocaleString()}</div>
+      <div class="sub">実績 ¥${actAll.toLocaleString()}</div>${remainHtml(goalAll,actAll)}
+      <div class="sub pace">1日 ¥${perDay(goalAll-actAll, left).toLocaleString()}</div></div>
   </div>`;
 }
+
+// 今月の残り日数（今日を含む）。過去月は0、未来月は月の日数
+function daysLeft(){
+  if(isCurrentMonth()) return DAYS_IN_MONTH - today.getDate() + 1;
+  const cur = new Date(today.getFullYear(), today.getMonth(), 1);
+  const view = new Date(YEAR, MONTH, 1);
+  return view > cur ? DAYS_IN_MONTH : 0;
+}
+function perDay(remain, left){
+  if(remain <= 0) return 0;
+  if(left <= 0) return remain;
+  return Math.ceil(remain/left);
+}
+
+// ペース表示バー
+function renderPaceBar(goal, actual, left){
+  const remain = Math.max(goal-actual, 0);
+  const need = perDay(remain, left);
+  const pct = goal ? Math.min(Math.round(actual/goal*100), 100) : 0;
+  let msg;
+  if(remain === 0) msg = `今月の目標達成！`;
+  else if(left <= 0) msg = `この月は終了しています（未達 ¥${remain.toLocaleString()}）`;
+  else msg = `残り${left}日 → 1日あたり <b>¥${need.toLocaleString()}</b> ペース`;
+  return `<div class="pace-box">
+    <div class="pace-top">
+      <span class="pace-msg">${msg}</span>
+      <span class="pace-pct">${pct}%</span>
+    </div>
+    <div class="pace-bar"><div class="pace-fill" style="width:${pct}%"></div></div>
+  </div>`;
+}
+
 function remainHtml(goal, actual){
   const r = goal-actual;
   return r<=0
@@ -634,10 +705,11 @@ function renderDayTasks(d, ds, dt, rec){
     const needRec = hasMoney(currentMember) && (cat==="uber"||cat==="eigyou");
     if(ct.length===0 && !needRec) return;
     html += `<div class="section-label"><span class="dot ${CAT_META[cat].dot}"></span>${CAT_META[cat].label}</div>`;
+    ct.sort(sortByTime);
     ct.forEach(t=>{
       html += `<div class="task ${t.done?'done':''}">
         <input type="checkbox" id="t-${t.id}" ${t.done?'checked':''} onchange="toggleTask('${t.id}',${d})">
-        <label for="t-${t.id}">${esc(t.text)}</label>
+        <label for="t-${t.id}">${timeBadge(t)}${esc(t.text)}</label>
         <button class="del" onclick="delTask('${t.id}')">×</button>
       </div>`;
     });
@@ -665,6 +737,17 @@ function renderDayTasks(d, ds, dt, rec){
 function getRecord(id, ds){
   return records.find(x=>x.member_id===id && x.record_date===ds)
     || {uber_sales:0, eigyou_self:0, eigyou_team:0};
+}
+function timeBadge(t){
+  if(!t.start_time) return "";
+  const f = v => (v||"").slice(0,5);
+  const label = t.end_time ? `${f(t.start_time)}–${f(t.end_time)}` : f(t.start_time);
+  return `<span class="task-time">${label}</span>`;
+}
+function sortByTime(a,b){
+  const av = a.start_time || "99:99", bv = b.start_time || "99:99";
+  if(av !== bv) return av < bv ? -1 : 1;
+  return (a.sort_order||0) - (b.sort_order||0);
 }
 function esc(s){ const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
 
@@ -784,10 +867,14 @@ async function addTask(d){
   const rep = document.getElementById("rep-"+d).value;
   const text = input.value.trim();
   if(!text) return;
+  const stEl = document.getElementById("st-"+d), etEl = document.getElementById("et-"+d);
+  const st = stEl && stEl.value ? stEl.value : null;
+  const et = etEl && etEl.value ? etEl.value : null;
   input.value = "";
+  if(stEl) stEl.value = ""; if(etEl) etEl.value = "";
   const days = repeatDays(d, rep);
   const rows = days.map(day=>({member_id:currentMember, task_date:dateStr(day),
-    category:cat, text, sort_order:999}));
+    category:cat, text, sort_order:999, start_time:st, end_time:et}));
   const { data, error } = await sb.from("tasks").insert(rows).select();
   if(!error){
     tasks = tasks.concat(data);
