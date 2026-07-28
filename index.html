@@ -201,6 +201,35 @@
   .task .del{background:none; border:none; color:#5a686e; font-size:17px;
     cursor:pointer; padding:0 4px; line-height:1;}
 
+  .skipbtn{
+    background:var(--panel2); border:1px solid var(--line); color:var(--sub);
+    font-size:10.5px; font-weight:700; border-radius:7px; padding:4px 8px;
+    cursor:pointer; flex-shrink:0; white-space:nowrap;
+  }
+  .skipbtn.on{background:#fff1e8; border-color:#f0a83c; color:#c9762a;}
+  .task.skip label{color:#b6a695; text-decoration:none;}
+  .task.skip input[type=checkbox]{
+    background:#f0d9c0; border-color:#f0d9c0; opacity:.8;
+  }
+  .skip-tag{
+    background:#fff1e8; color:#c9762a; font-size:10px; font-weight:700;
+    padding:2px 7px; border-radius:6px; margin-right:6px;
+  }
+  .task .skip{
+    background:none; border:1px solid var(--line); color:var(--sub);
+    font-size:10px; font-weight:700; border-radius:7px; padding:3px 7px;
+    cursor:pointer; flex-shrink:0; white-space:nowrap;
+  }
+  .task .skip.on{background:#fff4e6; border-color:#f0a83c; color:#c9762a;}
+  .task.skipped label{color:#b0bfc9; text-decoration:none;}
+  .task.skipped input[type=checkbox]{
+    background:#e3ebf1; border-color:#cfdae2; opacity:.7;
+  }
+  .skip-tag{
+    display:inline-block; background:#fff4e6; color:#c9762a;
+    font-size:10px; font-weight:700; padding:2px 7px; border-radius:6px;
+    margin-right:6px; vertical-align:1px;
+  }
   .record-row{margin:8px 0 4px;}
   .record-row.two-col{display:flex; gap:10px;}
   .record-row.two-col > div{flex:1;}
@@ -554,6 +583,8 @@ const EIGYOU_SELF_YEN = 8000;
 const EIGYOU_TEAM_YEN = 3000;
 const hasMoney = id => !!GOALS[id];
 const isAll = () => currentMember === "all";
+// 完了扱い（チェック済み or 今日はやらない）
+const isDone = t => !!(t.done || t.skipped);
 // その日の「予定」＝定型以外のタスク
 function eventsOf(memberId, d, ds){
   return tasksFor(memberId, d, ds).filter(t=>!isRoutine(t)).sort(sortByTime);
@@ -702,7 +733,7 @@ function renderMemberTabs(){
     let rem = 0, tot = 0;
     members.forEach(m=>{
       const dt = tasksFor(m.id, tdate, dateStr(tdate));
-      tot += dt.length; rem += dt.filter(t=>!t.done).length;
+      tot += dt.length; rem += dt.filter(t=>!isDone(t)).length;
     });
     allRem = tot===0 ? "今日 —" : (rem===0 ? "今日 完了" : "今日 残り"+rem);
   }
@@ -717,7 +748,7 @@ function renderMemberTabs(){
     let rem = "";
     if(tdate > 0){
       const dt = tasksFor(m.id, tdate, dateStr(tdate));
-      const r = dt.filter(t=>!t.done).length;
+      const r = dt.filter(t=>!isDone(t)).length;
       rem = dt.length===0 ? "今日 —" : (r===0 ? "今日 完了" : "今日 残り"+r);
     }
     return `<div class="member-tab ${m.id===currentMember?'active':''}" data-m="${m.id}"
@@ -757,12 +788,9 @@ function switchView(v){
   render();
 }
 function render(){
-  const y = window.scrollY;
   if(currentView==="list") renderList();
   else if(currentView==="cal") renderCalendar();
   else renderViz();
-  // 再描画で位置が飛ばないよう戻す
-  if(window.scrollY !== y) window.scrollTo(0, y);
 }
 
 // ===== リスト =====
@@ -775,7 +803,7 @@ function renderList(){
     if(isAll()){ html += renderAllDay(d, ds, td); continue; }
     const dt = visibleTasks(d, ds);
     const rec = getRecord(currentMember, ds);
-    const done = dt.filter(t=>t.done).length, total = dt.length;
+    const done = dt.filter(isDone).length, total = dt.length;
     const pct = total ? Math.round(done/total*100) : 0;
     const wdi = new Date(YEAR,MONTH,d).getDay();
     const wdCls = wdi===0?"sun":(wdi===6?"sat":"");
@@ -835,14 +863,14 @@ function renderAllDay(d, ds, td){
   let done=0, total=0;
   const blocks = members.map(m=>{
     const dt = tasksFor(m.id, d, ds).slice().sort(sortByTime);
-    const dn = dt.filter(t=>t.done).length;
+    const dn = dt.filter(isDone).length;
     done += dn; total += dt.length;
     const rows = dt.length===0
       ? `<div class="all-empty">タスクなし</div>`
-      : dt.map(t=>`<div class="task ${t.done?'done':''}">
+      : dt.map(t=>`<div class="task ${t.done?'done':''} ${t.skipped?'skip':''}">
           <input type="checkbox" id="a-${t.id}" ${t.done?'checked':''}
-            onchange="toggleTaskFor('${t.id}','${m.id}',${d})">
-          <label for="a-${t.id}">${timeBadge(t)}${esc(t.text)}</label>
+            ${t.skipped?'disabled':''} onchange="toggleTaskFor('${t.id}','${m.id}',${d})">
+          <label for="a-${t.id}">${skipTag(t)}${timeBadge(t)}${esc(t.text)}</label>
         </div>`).join("");
     return `<div class="all-block">
       <div class="all-head">
@@ -884,7 +912,7 @@ async function toggleTaskFor(id, memberId, d){
   if(was) return;
   const ds = dateStr(d);
   const after = tasksFor(memberId, d, ds);
-  if(after.length>0 && after.every(x=>x.done)){
+  if(after.length>0 && after.every(isDone)){
     setTimeout(()=>showPopFor("full", d, memberId), 260);
   }
 }
@@ -993,9 +1021,12 @@ function renderDayTasks(d, ds, dt, rec){
     html += `<div class="section-label"><span class="dot ${CAT_META[cat].dot}"></span>${CAT_META[cat].label}</div>`;
     ct.sort(sortByTime);
     ct.forEach(t=>{
-      html += `<div class="task ${t.done?'done':''}">
-        <input type="checkbox" id="t-${t.id}" ${t.done?'checked':''} onchange="toggleTask('${t.id}',${d})">
-        <label for="t-${t.id}">${timeBadge(t)}${esc(t.text)}</label>
+      html += `<div class="task ${t.done?'done':''} ${t.skipped?'skip':''}">
+        <input type="checkbox" id="t-${t.id}" ${t.done?'checked':''}
+          ${t.skipped?'disabled':''} onchange="toggleTask('${t.id}',${d})">
+        <label for="t-${t.id}">${skipTag(t)}${timeBadge(t)}${esc(t.text)}</label>
+        <button class="skipbtn ${t.skipped?'on':''}" title="本日やらない"
+          onclick="toggleSkip('${t.id}',${d})">${t.skipped?'戻す':'やらない'}</button>
         <button class="del" onclick="delTask('${t.id}')">×</button>
       </div>`;
     });
@@ -1040,6 +1071,9 @@ function getRecord(id, ds){
   return records.find(x=>x.member_id===id && x.record_date===ds)
     || {uber_sales:0, eigyou_self:0, eigyou_team:0};
 }
+function skipTag(t){
+  return t.skipped ? `<span class="skip-tag">お休み</span>` : "";
+}
 function timeBadge(t){
   if(!t.start_time) return "";
   const f = v => (v||"").slice(0,5);
@@ -1063,7 +1097,7 @@ async function toggleTask(id, d){
   if(!t) return;
   const ds = dateStr(d);
   const before = visibleTasks(d, ds);
-  const beforeDone = before.filter(x=>x.done).length;
+  const beforeDone = before.filter(isDone).length;
   const was = t.done;
   t.done = !t.done;
   render(); renderMemberTabs();
@@ -1072,7 +1106,7 @@ async function toggleTask(id, d){
   if(was) return; // チェックを外した時は出さない
   const after = visibleTasks(d, ds);
   const total = after.length;
-  const afterDone = after.filter(x=>x.done).length;
+  const afterDone = after.filter(isDone).length;
   if(total === 0) return;
 
   const half = Math.ceil(total/2);
@@ -1158,6 +1192,23 @@ function confetti(host){
   }
 }
 
+async function toggleSkip(id, d){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  const was = isDone(t);
+  t.skipped = !t.skipped;
+  if(t.skipped) t.done = false;
+  render(); renderMemberTabs();
+  await sb.from("tasks").update({skipped:t.skipped, done:t.done}).eq("id",id);
+
+  // お休みにしたことで全部片付いたらポップアップ
+  if(!was && t.skipped){
+    const ds = dateStr(d);
+    const after = visibleTasks(d, ds);
+    if(after.length>0 && after.every(isDone)) setTimeout(()=>showPop("full", d), 260);
+  }
+}
+
 async function delTask(id){
   tasks = tasks.filter(x=>x.id!==id);
   render(); renderMemberTabs();
@@ -1177,7 +1228,7 @@ async function addTask(d){
   if(stEl) stEl.value = ""; if(etEl) etEl.value = "";
   const days = repeatDays(d, rep);
   const rows = days.map(day=>({member_id:currentMember, task_date:dateStr(day),
-    category:cat, text, sort_order:999, start_time:st, end_time:et}));
+    category:cat, text, sort_order:999, start_time:st, end_time:et, skipped:false}));
   const { data, error } = await sb.from("tasks").insert(rows).select();
   if(!error){
     tasks = tasks.concat(data);
@@ -1373,7 +1424,7 @@ function renderCalendar(){
     let dots = "";
     members.forEach(m=>{
       const dt = tasksFor(m.id, d, ds);
-      const rem = dt.filter(t=>!t.done).length;
+      const rem = dt.filter(t=>!isDone(t)).length;
       const cls = dt.length===0 ? "off" : (rem===0 ? "ok" : "");
       const val = dt.length===0 ? "–" : (rem===0 ? "✓" : rem);
       dots += `<span class="md"><i style="background:${m.color}"></i><b class="${cls}">${val}</b></span>`;
@@ -1399,7 +1450,7 @@ function renderCalDetail(d){
   const wd = WD[new Date(YEAR,MONTH,d).getDay()];
   const dt = visibleTasks(d, ds);
   const rec = getRecord(currentMember, ds);
-  const done = dt.filter(t=>t.done).length;
+  const done = dt.filter(isDone).length;
   const name = (members.find(m=>m.id===currentMember)||{}).name||"";
 
   let html = `<div class="cal-detail">
@@ -1438,7 +1489,7 @@ function renderViz(){
   tasks.forEach(t=>{
     if(memberTotal[t.member_id]===undefined) return;
     memberTotal[t.member_id]++;
-    if(t.done) memberDone[t.member_id]++;
+    if(isDone(t)) memberDone[t.member_id]++;
   });
 
   const goalTotal = GOALS.kyosuke.uber + GOALS.kyosuke.eigyou;
@@ -1450,7 +1501,7 @@ function renderViz(){
     const ds = dateStr(d);
     const r = getRecord("kyosuke", ds);
     dailyYen.push(r.uber_sales + r.eigyou_self*EIGYOU_SELF_YEN + r.eigyou_team*EIGYOU_TEAM_YEN);
-    dailyDone.push(tasks.filter(t=>t.task_date===ds && t.done).length);
+    dailyDone.push(tasks.filter(t=>t.task_date===ds && isDone(t)).length);
   }
   const maxYen = Math.max(...dailyYen,1), maxDone = Math.max(...dailyDone,1);
 
