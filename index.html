@@ -261,6 +261,9 @@
   .det-b.rest{background:var(--orange-soft); color:#b8722c; border:2px solid #f6d6ac;}
   .det-b.edit{background:var(--accent-soft); color:var(--accent-dark);
     border:2px solid #cbe4f8;}
+  .det-b.calsw{background:var(--panel2); color:var(--sub); border:2px solid var(--line);
+    font-size:14.5px; padding:14px;}
+  .det-b.calsw.on{background:var(--green-soft); color:#1c8e69; border-color:#b9e8d6;}
   .det-b.del{background:none; color:var(--red); font-size:14.5px; padding:12px;}
   .det-b:active{transform:scale(.97);}
 
@@ -691,6 +694,7 @@ async function seedKyosuke(){
 /* ===== データ取得 ===== */
 function isMorningTask(t){ return !!(t.start_time && t.start_time < MORNING_END); }
 function isRoutine(t){
+  if(t.routine) return true;                       // 毎日・毎週で入れたもの
   if(t.member_id !== "kyosuke") return false;
   if((t.sort_order||0) >= 900) return false;
   return DEFAULT_TASKS_KYOSUKE.some(x=>x.text === t.text);
@@ -840,9 +844,21 @@ function openDetail(id){
         ${t.skipped ? "↩︎ お休みを解除" : "☕️ 今日はやらない"}
       </button>
       <button class="det-b edit" onclick="openEdit('${id}')">✏️ 内容・時間を変える</button>
+      <button class="det-b calsw ${isRoutine(t)?'':'on'}" onclick="toggleCalShow('${id}')">
+        ${isRoutine(t) ? "📅 カレンダーにも表示する" : "🚫 カレンダーには出さない"}
+      </button>
       <button class="det-b del" onclick="askDel('${id}')">🗑 この予定を削除</button>
       <button class="sh-btn sub" onclick="closeSheet()">閉じる</button>
     </div>`);
+}
+
+// カレンダー表示のオン・オフ
+async function toggleCalShow(id){
+  const t = tasks.find(x=>x.id===id); if(!t) return;
+  const now = isRoutine(t);
+  t.routine = !now;   // 表示する→routine=false、隠す→routine=true
+  closeSheet(); renderTop(); render();
+  await sb.from("tasks").update({routine:t.routine}).eq("id",id);
 }
 
 async function actDone(id, val){
@@ -1137,9 +1153,11 @@ async function saveEdit(){
     }
     list = list.filter(ds => ds !== e.date);
     if(list.length){
+      const isRep = ['daily','weekly','weekday'].includes(e.repeat);
       const rows = list.map(ds=>({
         member_id:e.member, task_date:ds, category:"other",
-        text:e.text, sort_order:999, start_time:st, end_time:et
+        text:e.text, sort_order:999, start_time:st, end_time:et,
+        routine: isRep
       }));
       const { data, error } = await sb.from("tasks").insert(rows).select();
       if(!error){
@@ -1330,9 +1348,11 @@ async function saveAdd(){
   } else {
     dayList = repeatDates(base, a.repeat, a.repUntil);
   }
+  const isRep = ['daily','weekly','weekday'].includes(a.repeat);
   const rows = dayList.map(ds=>({
     member_id:a.member, task_date:ds, category:"other",
-    text:a.text, sort_order:999, start_time:st, end_time:et
+    text:a.text, sort_order:999, start_time:st, end_time:et,
+    routine: isRep
   }));
   closeSheet();
   const { data, error } = await sb.from("tasks").insert(rows).select();
