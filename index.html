@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>かぞくの よてい</title>
+<title>家族の予定</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
@@ -28,10 +28,21 @@
   button{font-family:inherit; cursor:pointer;}
   .wrap{max-width:840px; margin:0 auto; padding:0 12px;}
 
+  /* ========== 家族写真 ========== */
+  .famtop{padding:12px 0 4px;}
+  .famtop img{
+    width:100%; display:block; border-radius:var(--r);
+    box-shadow:0 10px 26px rgba(20,60,95,.18);
+  }
+  .fam-cap{
+    text-align:center; font-size:11.5px; color:var(--sub);
+    font-weight:700; margin-top:7px; letter-spacing:.03em;
+  }
+
   /* ========== 上部 ========== */
   .topbar{
     background:var(--panel); border-bottom:1px solid var(--line);
-    padding:12px 0 10px; position:sticky; top:0; z-index:40;
+    padding:12px 0 10px; margin-top:10px; border-radius:var(--r) var(--r) 0 0;
     box-shadow:0 1px 8px rgba(20,60,95,.05);
   }
   .top-in{display:flex; align-items:center; justify-content:space-between; gap:10px;}
@@ -189,6 +200,10 @@
   }
   .chip:active{transform:scale(.95);}
   .chip.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .chip.datepick{position:relative; overflow:hidden;}
+  .chip.datepick input{
+    position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer;
+  }
   .chip.big{font-size:15.5px; padding:13px 20px;}
 
   .sh-input{
@@ -228,12 +243,12 @@
 
   /* ========== カレンダー ========== */
   .cal-wrap{background:var(--panel); border:1px solid var(--line);
-    border-radius:var(--r); padding:14px 9px; margin-top:14px; box-shadow:var(--sh);}
-  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; align-items:start;}
+    border-radius:var(--r); padding:14px 6px; margin-top:14px; box-shadow:var(--sh);}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px; align-items:start;}
   .cal-head{font-size:11px; color:var(--sub); text-align:center; padding:3px 0 6px; font-weight:900;}
   .cal-head.sun{color:var(--red);} .cal-head.sat{color:var(--accent);}
   .cal-cell{
-    min-height:76px; background:var(--panel2); border:2px solid transparent;
+    min-height:132px; background:var(--panel2); border:2px solid transparent;
     border-radius:11px; padding:5px 3px; display:flex; flex-direction:column; gap:3px;
     overflow:hidden;
   }
@@ -448,6 +463,11 @@
 </head>
 <body>
 
+<div class="famtop"><div class="wrap">
+  <img id="famPhoto" alt="">
+  <div class="fam-cap">いつも見守ってくれてありがとう</div>
+</div></div>
+
 <div class="topbar"><div class="wrap">
   <div class="top-in">
     <div class="today-str" id="todayStr"></div>
@@ -456,14 +476,14 @@
   <div class="daysw" id="daySw"></div>
 </div></div>
 
-<div class="wrap" id="app"><div class="status">よみこみ中…</div></div>
+<div class="wrap" id="app"><div class="status">読み込み中…</div></div>
 
-<button class="addbig" id="addBig" onclick="openAdd()">＋ よてい を いれる</button>
+<button class="addbig" id="addBig" onclick="openAdd()">＋ 予定を追加</button>
 
 <div class="nav">
-  <button class="on" data-v="board" onclick="go('board')"><i>🏠</i>きょう</button>
+  <button class="on" data-v="board" onclick="go('board')"><i>🏠</i>今日</button>
   <button data-v="cal" onclick="go('cal')"><i>📅</i>カレンダー</button>
-  <button data-v="mine" onclick="go('mine')"><i>📊</i>じぶん</button>
+  <button data-v="mine" onclick="go('mine')"><i>📊</i>自分</button>
 </div>
 
 <div class="sheet" id="sheet"><div class="sheet-in" id="sheetIn"></div></div>
@@ -564,7 +584,7 @@ async function init(){
 }
 function showError(e){
   document.getElementById("app").innerHTML =
-    `<div class="status">よみこみに失敗しました<br>${e.message||""}</div>`;
+    `<div class="status">読み込みに失敗しました<br>${e.message||""}</div>`;
 }
 
 async function loadMonth(){
@@ -628,6 +648,8 @@ function esc(s){ const d=document.createElement("div"); d.textContent=s; return 
 
 /* ===== 上部 ===== */
 function renderTop(){
+  const fp = document.getElementById("famPhoto");
+  if(fp && !fp.src) fp.src = IMG.header;
   const bd = boardDate();
   document.getElementById("todayStr").innerHTML =
     `${bd.getMonth()+1}月${bd.getDate()}日<small>${WD[bd.getDay()]}よう日</small>`;
@@ -639,11 +661,11 @@ function renderTop(){
     const ds = fmt(dt);
     let tot=0, rem=0;
     members.forEach(m=>{ const x=tasksForDs(m.id, ds); tot+=x.length; rem+=x.filter(t=>!isDone(t)).length; });
-    return tot===0 ? "よてい なし" : (rem===0 ? "ぜんぶ おわり" : `のこり ${rem}こ`);
+    return tot===0 ? "予定なし" : (rem===0 ? "すべて完了" : `のこり ${rem}件`);
   };
   document.getElementById("daySw").innerHTML = `
-    <button class="${boardOffset===0?'on':''}" onclick="setDay(0)">きょう<small>${c(t0)}</small></button>
-    <button class="${boardOffset===1?'on':''}" onclick="setDay(1)">あした<small>${c(t1)}</small></button>`;
+    <button class="${boardOffset===0?'on':''}" onclick="setDay(0)">今日<small>${c(t0)}</small></button>
+    <button class="${boardOffset===1?'on':''}" onclick="setDay(1)">明日<small>${c(t1)}</small></button>`;
 }
 function setDay(o){ boardOffset = o; renderTop(); render(); }
 
@@ -674,16 +696,16 @@ function renderBoard(){
 
     let body = "";
     if(dt.length === 0){
-      body = `<div class="col-empty">よてい<br>なし</div>`;
+      body = `<div class="col-empty">予定<br>なし</div>`;
     } else if(allDone){
-      body = `<div class="col-clear"><span class="em">🎉</span>ぜんぶ<br>おわった！</div>`;
+      body = `<div class="col-clear"><span class="em">🎉</span>すべて<br>完了！</div>`;
       body += dt.map(t=>cardHtml(t, m)).join("");
     } else {
       const groups = [
-        {l:"あさ",   i:"🌅", f:t=>t.start_time && t.start_time < "12:00"},
-        {l:"ひる",   i:"☀️", f:t=>t.start_time && t.start_time >= "12:00" && t.start_time < "17:00"},
-        {l:"よる",   i:"🌙", f:t=>t.start_time && t.start_time >= "17:00"},
-        {l:"いつでも",i:"🕐", f:t=>!t.start_time}
+        {l:"朝",   i:"🌅", f:t=>t.start_time && t.start_time < "12:00"},
+        {l:"昼",   i:"☀️", f:t=>t.start_time && t.start_time >= "12:00" && t.start_time < "17:00"},
+        {l:"夜",   i:"🌙", f:t=>t.start_time && t.start_time >= "17:00"},
+        {l:"時間未定",i:"🕐", f:t=>!t.start_time}
       ];
       groups.forEach(g=>{
         const list = dt.filter(g.f);
@@ -698,19 +720,19 @@ function renderBoard(){
       <div class="col-head">
         <img src="${IMG[m.id]}" alt="">
         <div class="col-name">${esc(m.name)}</div>
-        <div class="col-badge ${allDone?'ok':''}">${dt.length===0?'—':(allDone?'かんりょう':'のこり'+(dt.length-done))}</div>
+        <div class="col-badge ${allDone?'ok':''}">${dt.length===0?'—':(allDone?'完了':'のこり'+(dt.length-done))}</div>
       </div>
       <div class="col-body">${body}</div>
     </div>`;
   }).join("");
 
-  const label = boardOffset===0 ? "きょう やること" : "あした の よてい";
+  const label = boardOffset===0 ? "今日やること" : "明日の予定";
   document.getElementById("app").innerHTML = `
     <div class="board">
-      <div class="board-ttl"><h2>${label}</h2><span>おした ら かんりょう</span></div>
+      <div class="board-ttl"><h2>${label}</h2><span>タップで完了</span></div>
       <div class="cols">${cols}</div>
     </div>
-    <div class="foot">かぞく みんなで つかえます 🐈</div>`;
+    <div class="foot">家族みんなで共有中 🐈</div>`;
 }
 
 function cardHtml(t, m){
@@ -731,21 +753,21 @@ function openDetail(id){
   const t = tasks.find(x=>x.id===id);
   if(!t) return;
   const m = members.find(x=>x.id===t.member_id) || {};
-  const tm = t.start_time ? t.start_time.slice(0,5) + (t.end_time? " 〜 "+t.end_time.slice(0,5) : "") : "じかん しどう なし";
-  const st = t.skipped ? "きょうは おやすみ" : (t.done ? "おわりました" : "まだ です");
+  const tm = t.start_time ? t.start_time.slice(0,5) + (t.end_time? " 〜 "+t.end_time.slice(0,5) : "") : "時間指定なし";
+  const st = t.skipped ? "今日はお休み" : (t.done ? "完了しました" : "まだです");
 
   openSheet(`
     <div class="det-t">${esc(t.text)}</div>
     <div class="det-s">${esc(m.name||"")}　／　${tm}　／　${st}</div>
     <div class="det-btns">
       ${t.done && !t.skipped
-        ? `<button class="det-b undone" onclick="actDone('${id}',false)">↩︎ まだ に もどす</button>`
-        : `<button class="det-b done" onclick="actDone('${id}',true)">✓ おわった！</button>`}
+        ? `<button class="det-b undone" onclick="actDone('${id}',false)">↩︎ 未完了に戻す</button>`
+        : `<button class="det-b done" onclick="actDone('${id}',true)">✓ 完了にする</button>`}
       <button class="det-b rest" onclick="actSkip('${id}')">
-        ${t.skipped ? "↩︎ おやすみ を やめる" : "☕️ きょうは やらない"}
+        ${t.skipped ? "↩︎ お休みを解除" : "☕️ 今日はやらない"}
       </button>
-      <button class="det-b del" onclick="actDel('${id}')">この よてい を けす</button>
-      <button class="sh-btn sub" onclick="closeSheet()">とじる</button>
+      <button class="det-b del" onclick="actDel('${id}')">この予定を削除</button>
+      <button class="sh-btn sub" onclick="closeSheet()">閉じる</button>
     </div>`);
 }
 
@@ -795,14 +817,14 @@ function openAdd(){
 function stepWho(){
   openSheet(`
     <div class="sh-step">STEP 1 / 3</div>
-    <div class="sh-q">だれ の よてい？</div>
+    <div class="sh-q">誰の予定？</div>
     <div class="pick-fam">
       ${members.map(m=>`
         <button class="${addState.member===m.id?'on':''}" onclick="pickWho('${m.id}')">
           <img src="${IMG[m.id]}" alt=""><span>${esc(m.name)}</span>
         </button>`).join("")}
     </div>
-    <button class="sh-btn sub" onclick="closeSheet()">やめる</button>`);
+    <button class="sh-btn sub" onclick="closeSheet()">キャンセル</button>`);
 }
 function pickWho(id){ addState.member = id; stepWhat(); }
 
@@ -810,17 +832,17 @@ function stepWhat(){
   const pre = (PRESETS[addState.member] || []).concat(PRESETS.common);
   const uniq = [...new Set(pre)];
   openSheet(`
-    <button class="sh-back" onclick="stepWho()">‹ もどる</button>
+    <button class="sh-back" onclick="stepWho()">‹ 戻る</button>
     <div class="sh-step">STEP 2 / 3</div>
-    <div class="sh-q">なに を する？</div>
+    <div class="sh-q">何をする？</div>
     <div class="chips">
       ${uniq.map(p=>`<button class="chip big ${addState.text===p?'on':''}"
         onclick="pickWhat('${esc(p)}')">${esc(p)}</button>`).join("")}
     </div>
-    <div class="sh-lbl">じぶん で かく</div>
-    <input class="sh-input" id="freeText" placeholder="たとえば：〇〇に行く"
+    <div class="sh-lbl">自由に入力</div>
+    <input class="sh-input" id="freeText" placeholder="例：〇〇に行く"
       value="${esc(addState.text)}">
-    <button class="sh-btn" onclick="pickWhatFree()">つぎ へ ›</button>`);
+    <button class="sh-btn" onclick="pickWhatFree()">次へ ›</button>`);
 }
 function pickWhat(p){ addState.text = p; stepWhen(); }
 function pickWhatFree(){
@@ -832,44 +854,47 @@ function pickWhatFree(){
 function stepWhen(){
   const bd = new Date(addState.date+"T00:00:00");
   openSheet(`
-    <button class="sh-back" onclick="stepWhat()">‹ もどる</button>
+    <button class="sh-back" onclick="stepWhat()">‹ 戻る</button>
     <div class="sh-step">STEP 3 / 3</div>
     <div class="sh-q">いつ？</div>
-    <div class="sh-lbl">ひづけ</div>
+    <div class="sh-lbl">日付</div>
     <div class="chips">
       ${[0,1,2].map(o=>{
         const d = new Date(today); d.setDate(d.getDate()+o);
-        const lbl = o===0?"きょう":(o===1?"あした":`${d.getMonth()+1}/${d.getDate()}`);
+        const lbl = o===0?"今日":(o===1?"明日":`${d.getMonth()+1}/${d.getDate()}`);
         return `<button class="chip ${addState.date===fmt(d)?'on':''}"
           onclick="pickDate('${fmt(d)}')">${lbl}</button>`;
       }).join("")}
-      <button class="chip" onclick="pickDateOther()">ほかの日</button>
+      ${(()=>{ const ex=[0,1,2].map(o=>{const d=new Date(today); d.setDate(d.getDate()+o); return fmt(d);});
+        if(ex.includes(addState.date)) return "";
+        const d=new Date(addState.date+"T00:00:00");
+        return `<button class="chip on">${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}）</button>`;
+      })()}
+      <label class="chip datepick">他の日を選ぶ
+        <input type="date" value="${addState.date}" onchange="pickDate(this.value)">
+      </label>
     </div>
-    <div class="sh-lbl">じかんたい</div>
+    <div class="sh-lbl">時間帯</div>
     <div class="chips">
       ${TIMESLOTS.map(s=>`<button class="chip big ${addState.slot===s.k?'on':''}"
         onclick="pickSlot('${s.k}')">${s.ico} ${s.label}</button>`).join("")}
     </div>
-    <div class="sh-lbl">くりかえし</div>
+    <div class="sh-lbl">繰り返し</div>
     <div class="chips">
       <button class="chip ${addState.repeat==='once'?'on':''}" onclick="pickRep('once')">この日だけ</button>
-      <button class="chip ${addState.repeat==='daily'?'on':''}" onclick="pickRep('daily')">まいにち</button>
-      <button class="chip ${addState.repeat==='weekly'?'on':''}" onclick="pickRep('weekly')">まいしゅう ${WD[bd.getDay()]}よう</button>
-      <button class="chip ${addState.repeat==='weekday'?'on':''}" onclick="pickRep('weekday')">へいじつ</button>
+      <button class="chip ${addState.repeat==='daily'?'on':''}" onclick="pickRep('daily')">毎日</button>
+      <button class="chip ${addState.repeat==='weekly'?'on':''}" onclick="pickRep('weekly')">毎週${WD[bd.getDay()]}曜</button>
+      <button class="chip ${addState.repeat==='weekday'?'on':''}" onclick="pickRep('weekday')">平日</button>
     </div>
-    <button class="sh-btn" onclick="saveAdd()">これ で いれる ✓</button>`);
+    <button class="sh-btn" onclick="saveAdd()">この内容で追加 ✓</button>`);
 }
 function pickDate(ds){ addState.date = ds; stepWhen(); }
-function pickDateOther(){
-  const v = prompt("ひづけ を いれてください（れい：2026-08-05）", addState.date);
-  if(v && /^\d{4}-\d{2}-\d{2}$/.test(v)){ addState.date = v; stepWhen(); }
-}
 function pickSlot(k){ addState.slot = k; stepWhen(); }
 function pickRep(r){ addState.repeat = r; stepWhen(); }
 
 async function saveAdd(){
   const a = addState;
-  if(!a.member || !a.text){ alert("だれの、なにを するか えらんでください"); return; }
+  if(!a.member || !a.text){ alert("誰の・何をするかを選んでください"); return; }
   const slot = TIMESLOTS.find(s=>s.k===a.slot);
   const st = slot ? slot.st : null;
 
@@ -884,9 +909,9 @@ async function saveAdd(){
   if(!error){
     tasks = tasks.concat(data);
     renderTop(); render();
-    if(dayList.length>1) alert(`「${a.text}」を ${dayList.length}日ぶん いれました`);
+    if(dayList.length>1) alert(`「${a.text}」を ${dayList.length}日分 追加しました`);
   } else {
-    alert("ほぞん できませんでした");
+    alert("保存できませんでした");
   }
 }
 function repeatDates(base, rep){
@@ -931,13 +956,13 @@ function renderCal(){
     const evs = [];
     members.forEach(m=> eventsOf(m.id, d, ds).forEach(t=>evs.push({t,m})));
     const expanded = calExpanded.has(d);
-    const shown = expanded ? evs : evs.slice(0,3);
+    const shown = expanded ? evs : evs.slice(0,5);
     let chips = shown.map(e=>{
       const c = e.m.id==="kyosuke" ? "var(--c-me)" : e.m.id==="mother" ? "var(--c-mom)" : "var(--c-sis)";
       const tm = e.t.start_time ? e.t.start_time.slice(0,5)+" " : "";
       return `<div class="ev-chip ${isDone(e.t)?'done':''}" style="--c:${c}">${esc(tm+e.t.text)}</div>`;
     }).join("");
-    if(evs.length>3) chips += `<div class="ev-more" onclick="toggleEv(event,${d})">${expanded?'とじる':'+'+(evs.length-3)}</div>`;
+    if(evs.length>5) chips += `<div class="ev-more" onclick="toggleEv(event,${d})">${expanded?'閉じる':'+'+(evs.length-5)}</div>`;
 
     let dots = "", cTot=0, cDone=0;
     members.forEach(m=>{
@@ -959,7 +984,7 @@ function renderCal(){
   }
   html += `</div><div class="cal-legend">` +
     members.map(m=>`<span><img src="${IMG[m.id]}" class="legend-face">${esc(m.name)}</span>`).join("") +
-    `<span>すうじ＝のこり</span></div></div>`;
+    `<span>数字＝のこり件数</span></div></div>`;
 
   document.getElementById("app").innerHTML = html;
   buildMonthOptions();
@@ -972,7 +997,7 @@ function selectCalDay(d){
   members.forEach(m=>{
     const dt = tasksForDs(m.id, ds).slice().sort(sortByTime);
     tot += dt.length; dn += dt.filter(isDone).length;
-    const rows = dt.length===0 ? `<div class="col-empty" style="padding:8px">よてい なし</div>`
+    const rows = dt.length===0 ? `<div class="col-empty" style="padding:8px">予定なし</div>`
       : dt.map(t=>cardHtml(t,m)).join("");
     blocks += `<div style="margin-top:14px">
       <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px">
@@ -984,9 +1009,9 @@ function selectCalDay(d){
   });
   openSheet(`
     <div class="det-t">${MONTH+1}月${d}日（${wd}）</div>
-    <div class="det-s">かぞく ぜんぶで ${dn}/${tot} おわり</div>
+    <div class="det-s">家族全体 ${dn}/${tot} 完了</div>
     ${blocks}
-    <button class="sh-btn sub" onclick="closeSheet()">とじる</button>`);
+    <button class="sh-btn sub" onclick="closeSheet()">閉じる</button>`);
   render();
 }
 function toggleEv(e,d){
@@ -1094,7 +1119,7 @@ function renderMine(){
     <div class="ramen-row ${rec.ramen_shift?'on':''}" onclick="toggleRamen('${ds}')">
       <div class="ramen-ico">🍜</div>
       <div class="ramen-txt">
-        <div class="ramen-t">この日は ラーメンバイト</div>
+        <div class="ramen-t">この日はラーメンバイト</div>
         <div class="ramen-s">${rec.ramen_shift?"翌日の午前タスクはお休みになります":"入れると翌日の午前が休みになります"}</div>
       </div>
       <div class="ramen-sw ${rec.ramen_shift?'on':''}"><span></span></div>
@@ -1286,13 +1311,13 @@ function showOmikuji(key){
   el.className = "omi";
   el.innerHTML = `<div class="omi-card">
     <div class="omi-top">
-      <div class="omi-ttl">きょうの おみくじ</div>
+      <div class="omi-ttl">今日のおみくじ</div>
       <div class="omi-date">${t.getFullYear()}.${t.getMonth()+1}.${t.getDate()}</div>
     </div>
     <div class="omi-draw" id="omiDraw">
       <div class="omi-box"><span>🎴</span></div>
-      <div class="omi-lead">きょうは どんな 一日かな？<br>おみくじを ひいてみよう</div>
-      <button class="omi-btn" onclick="doDraw('${key}')">ひく</button>
+      <div class="omi-lead">今日はどんな一日かな？<br>おみくじを引いてみよう</div>
+      <button class="omi-btn" onclick="doDraw('${key}')">引く</button>
     </div>
   </div>`;
   document.body.appendChild(el);
@@ -1319,7 +1344,7 @@ function doDraw(key){
         <div class="omi-item-l">LUCKY ITEM</div>
         <div class="omi-item-v">${f.item}</div>
       </div>
-      <button class="omi-close" onclick="closeOmi()">とじて きょうを はじめる</button>
+      <button class="omi-close" onclick="closeOmi()">閉じて今日をはじめる</button>
     </div>`;
   if(f.luck.name === "大吉") confetti(el);
 }
