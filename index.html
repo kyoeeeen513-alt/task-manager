@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>家族の予定</title>
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-512.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="家族の予定">
+<meta name="theme-color" content="#f0f5f9">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
@@ -336,6 +343,20 @@
   .rec-lbl{font-size:12.5px; color:var(--sub); font-weight:800; display:block; margin-bottom:6px;}
   .rec-in{width:100%; background:var(--panel2); border:2px solid var(--line);
     border-radius:12px; padding:13px; font-size:17px; font-weight:800; color:var(--ink);}
+  .datenav{display:flex; align-items:center; gap:8px;}
+  .datenav button{
+    background:var(--panel2); border:2px solid var(--line); color:var(--accent);
+    width:44px; height:44px; border-radius:12px; font-size:20px; font-weight:900;
+    flex-shrink:0;
+  }
+  .datenav button:active{transform:scale(.94);}
+  .datebox{
+    flex:1; position:relative; overflow:hidden;
+    background:var(--panel2); border:2px solid var(--line); border-radius:12px;
+    padding:12px; text-align:center; font-size:16px; font-weight:900;
+    color:var(--ink); cursor:pointer;
+  }
+  .datebox input{position:absolute; inset:0; opacity:0; width:100%; height:100%;}
   .rec-hint{font-size:12px; color:var(--sub); margin-top:8px; font-weight:700;}
   .ramen-row{display:flex; align-items:center; gap:12px; background:var(--panel2);
     border:2px solid var(--line); border-radius:var(--r2); padding:14px; margin-top:12px;}
@@ -593,6 +614,7 @@ let boardOffset = 0;       // 0=きょう 1=あした
 let calSelectedDay = null;
 const calExpanded = new Set();
 let addState = null;
+let recDate = null;   // 記録を編集する日
 
 const today = new Date();
 let YEAR = today.getFullYear(), MONTH = today.getMonth(), DAYS_IN_MONTH = 0;
@@ -1163,8 +1185,12 @@ function renderMine(){
                : `残り${left}日 → 1日 <b>¥${perDay(remain,left).toLocaleString()}</b>`);
 
   const td = todayDate();
-  const ds = td>0 ? dateStr(td) : fmt(boardDate());
+  if(!recDate || !recDate.startsWith(`${YEAR}-${String(MONTH+1).padStart(2,"0")}`)){
+    recDate = td>0 ? dateStr(td) : dateStr(1);
+  }
+  const ds = recDate;
   const rec = getRecordDs("kyosuke", ds);
+  const rd = new Date(ds+"T00:00:00");
   const dayYen = rec.uber_sales + rec.eigyou_self*EIGYOU_SELF_YEN + rec.eigyou_team*EIGYOU_TEAM_YEN;
 
   let html = `
@@ -1194,7 +1220,20 @@ function renderMine(){
   </div>
 
   <div class="mine-sec">
-    <div class="mine-ttl">✍️ ${ds.slice(5).replace("-","/")} の記録</div>
+    <div class="mine-ttl">✍️ 売上を記録する</div>
+    <div class="rec-row">
+      <label class="rec-lbl">記録する日</label>
+      <div class="datenav">
+        <button onclick="shiftRec(-1)">‹</button>
+        <label class="datebox">
+          <span>${MONTH+1}月${rd.getDate()}日（${WD[rd.getDay()]}）</span>
+          <input type="date" value="${ds}" onchange="setRecDate(this.value)">
+        </label>
+        <button onclick="shiftRec(1)">›</button>
+      </div>
+      ${ds !== (td>0?dateStr(td):"") ? `<button class="chip" style="margin-top:8px"
+        onclick="setRecDate('${td>0?dateStr(td):dateStr(1)}')">今日に戻す</button>` : ""}
+    </div>
     <div class="rec-row">
       <label class="rec-lbl">Uber 売上（円）</label>
       <input type="number" inputmode="numeric" class="rec-in" value="${rec.uber_sales||''}"
@@ -1272,6 +1311,23 @@ function remainHtml(goal, actual){
   return r<=0 ? `<div class="sub remain achieved">達成 +¥${Math.abs(r).toLocaleString()}</div>`
               : `<div class="sub remain">残り ¥${r.toLocaleString()}</div>`;
 }
+function setRecDate(v){
+  if(!v) return;
+  recDate = v;
+  const y = Number(v.slice(0,4)), m = Number(v.slice(5,7))-1;
+  if(y!==YEAR || m!==MONTH){
+    YEAR = y; MONTH = m; refreshMonthVars();
+    loadMonth().then(()=>{ view = "mine"; render(); });
+    return;
+  }
+  renderMine();
+}
+function shiftRec(diff){
+  const d = new Date(recDate+"T00:00:00");
+  d.setDate(d.getDate()+diff);
+  setRecDate(fmt(d));
+}
+
 async function saveRecord(ds, field, value){
   const v = parseInt(value)||0;
   let r = records.find(x=>x.member_id==="kyosuke" && x.record_date===ds);
