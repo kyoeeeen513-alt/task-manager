@@ -213,6 +213,20 @@
   }
   .chip.big{font-size:15.5px; padding:13px 20px;}
 
+  .range-box{
+    background:var(--panel2); border:2px solid var(--accent); border-radius:14px;
+    padding:13px; margin-bottom:14px;
+  }
+  .range-line{display:flex; align-items:center; gap:10px; margin-bottom:9px;}
+  .range-line:last-child{margin-bottom:0;}
+  .range-l{font-size:12.5px; font-weight:900; color:var(--sub); width:38px; flex-shrink:0;}
+  .range-line b{font-size:15px; font-weight:900;}
+  .range-line .datebox{flex:1; font-size:14.5px; margin:0;}
+  .range-cnt{
+    margin-top:10px; text-align:center; font-size:13px; font-weight:900;
+    color:var(--accent-dark); background:var(--accent-soft);
+    border-radius:10px; padding:8px;
+  }
   .sh-input{
     width:100%; background:var(--panel2); border:2px solid var(--line);
     border-radius:14px; padding:15px 15px; font-size:17px; font-weight:700;
@@ -868,7 +882,10 @@ function celebCheck(t, phase, before){
 /* ================= 予定をいれる ================= */
 function openAdd(){
   const bd = boardDate();
-  addState = { member:null, text:"", slot:null, st:null, et:null, date:fmt(bd), repeat:"once" };
+  openAddFor(fmt(bd));
+}
+function openAddFor(ds){
+  addState = { member:null, text:"", slot:null, st:null, et:null, date:ds, until:null, repeat:"once" };
   stepWho();
 }
 function stepWho(){
@@ -948,12 +965,32 @@ function stepWhen(){
       ${addState.st}${addState.et?" 〜 "+addState.et:""} で登録します
       <button class="chip" style="padding:5px 12px;margin-left:8px"
         onclick="clearTime()">時間を消す</button></div>` : ""}
-    <div class="sh-lbl">繰り返し</div>
+    <div class="sh-lbl">この日だけ？ 何日か続く？</div>
     <div class="chips">
-      <button class="chip ${addState.repeat==='once'?'on':''}" onclick="pickRep('once')">この日だけ</button>
-      <button class="chip ${addState.repeat==='daily'?'on':''}" onclick="pickRep('daily')">毎日</button>
+      <button class="chip big ${addState.repeat==='once'?'on':''}" onclick="pickRep('once')">この日だけ</button>
+      <button class="chip big ${addState.repeat==='range'?'on':''}" onclick="pickRep('range')">📅 連日（期間）</button>
+    </div>
+    ${addState.repeat==='range' ? `
+      <div class="range-box">
+        <div class="range-line">
+          <span class="range-l">開始</span>
+          <b>${fmtJp(addState.date)}</b>
+        </div>
+        <div class="range-line">
+          <span class="range-l">終了</span>
+          <label class="datebox" style="padding:10px">
+            <span>${addState.until ? fmtJp(addState.until) : "日付を選ぶ"}</span>
+            <input type="date" min="${addState.date}" value="${addState.until||''}"
+              onchange="pickUntil(this.value)">
+          </label>
+        </div>
+        ${addState.until ? `<div class="range-cnt">${rangeDays(addState.date, addState.until).length}日間 に追加します</div>` : ""}
+      </div>` : ""}
+    <div class="sh-lbl">くり返し（毎週・毎日など）</div>
+    <div class="chips">
+      <button class="chip ${addState.repeat==='daily'?'on':''}" onclick="pickRep('daily')">今月ずっと毎日</button>
       <button class="chip ${addState.repeat==='weekly'?'on':''}" onclick="pickRep('weekly')">毎週${WD[bd.getDay()]}曜</button>
-      <button class="chip ${addState.repeat==='weekday'?'on':''}" onclick="pickRep('weekday')">平日</button>
+      <button class="chip ${addState.repeat==='weekday'?'on':''}" onclick="pickRep('weekday')">平日だけ</button>
     </div>
     <button class="sh-btn" onclick="saveAdd()">この内容で追加 ✓</button>`);
 }
@@ -967,7 +1004,23 @@ function setTime(){
   stepWhen();
 }
 function clearTime(){ addState.st = null; addState.et = null; stepWhen(); }
-function pickRep(r){ addState.repeat = r; stepWhen(); }
+function pickRep(r){
+  addState.repeat = r;
+  if(r !== "range") addState.until = null;
+  stepWhen();
+}
+function pickUntil(v){ if(v) addState.until = v; stepWhen(); }
+function fmtJp(ds){
+  const d = new Date(ds+"T00:00:00");
+  return `${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）`;
+}
+function rangeDays(from, to){
+  const out = [];
+  const a = new Date(from+"T00:00:00"), b = new Date(to+"T00:00:00");
+  if(b < a) return [fmt(a)];
+  for(let d=new Date(a); d<=b; d.setDate(d.getDate()+1)) out.push(fmt(new Date(d)));
+  return out;
+}
 
 async function saveAdd(){
   const a = addState;
@@ -977,7 +1030,13 @@ async function saveAdd(){
   const et = a.st ? a.et : null;
 
   const base = new Date(a.date+"T00:00:00");
-  const dayList = repeatDates(base, a.repeat);
+  let dayList;
+  if(a.repeat === "range"){
+    if(!a.until){ alert("終了日を選んでください"); return; }
+    dayList = rangeDays(a.date, a.until);
+  } else {
+    dayList = repeatDates(base, a.repeat);
+  }
   const rows = dayList.map(ds=>({
     member_id:a.member, task_date:ds, category:"other",
     text:a.text, sort_order:999, start_time:st, end_time:et
@@ -1125,6 +1184,7 @@ function selectCalDay(d){
   openSheet(`
     <div class="det-t">${MONTH+1}月${d}日（${wd}）</div>
     <div class="det-s">家族全体 ${dn}/${tot} 完了</div>
+    <button class="sh-btn" onclick="openAddFor('${ds}')">＋ この日に予定を追加</button>
     ${blocks}
     <button class="sh-btn sub" onclick="closeSheet()">閉じる</button>`);
   render();
