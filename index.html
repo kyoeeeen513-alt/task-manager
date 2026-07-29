@@ -892,7 +892,7 @@ function openEdit(id){
     id, member:t.member_id, text:t.text, date:t.task_date,
     st: t.start_time ? t.start_time.slice(0,5) : null,
     et: t.end_time ? t.end_time.slice(0,5) : null,
-    slot: null, repeat:"once", until:null
+    slot: null, repeat:"once", until:null, repUntil:null
   };
   // 開始時刻がプリセットと一致すれば時間帯として扱う
   const hit = TIMESLOTS.find(x=>x.st && x.st === editState.st);
@@ -983,10 +983,27 @@ function editDraw(){
       </div>` : ""}
     <div class="sh-lbl">繰り返し（毎週・毎日など）</div>
     <div class="chips">
-      <button class="chip ${e.repeat==='daily'?'on':''}" onclick="edRep('daily')">今月ずっと毎日</button>
+      <button class="chip ${e.repeat==='daily'?'on':''}" onclick="edRep('daily')">毎日</button>
       <button class="chip ${e.repeat==='weekly'?'on':''}" onclick="edRep('weekly')">毎週${WD[d.getDay()]}曜</button>
       <button class="chip ${e.repeat==='weekday'?'on':''}" onclick="edRep('weekday')">平日だけ</button>
     </div>
+    ${['daily','weekly','weekday'].includes(e.repeat) ? `
+      <div class="range-box">
+        <div class="sh-lbl" style="margin:0 0 9px">いつまで繰り返す？</div>
+        <div class="chips" style="margin-bottom:8px">
+          ${untilOptions(e.date).map(o=>`
+            <button class="chip ${e.repUntil===o.date?'on':''}"
+              onclick="edRepUntil('${o.date}')">${o.label}</button>`).join("")}
+          <label class="chip datepick">日付を指定
+            <input type="date" min="${e.date}" value="${e.repUntil||''}"
+              onchange="edRepUntil(this.value)">
+          </label>
+        </div>
+        <div class="range-cnt">
+          ${fmtJp(e.date)} 〜 ${fmtJp(e.repUntil)}<br>
+          ${repeatDates(new Date(e.date+"T00:00:00"), e.repeat, e.repUntil).length}日分
+        </div>
+      </div>` : ""}
     ${e.repeat!=='once' ? `<div class="rec-hint" style="margin:-6px 0 14px">
       ※ この予定を変更し、他の日にも同じ予定を追加します</div>` : ""}
 
@@ -1023,8 +1040,12 @@ function edRep(r){
   edKeepInputs();
   editState.repeat = r;
   if(r !== "range") editState.until = null;
+  if(['daily','weekly','weekday'].includes(r) && !editState.repUntil){
+    editState.repUntil = untilOptions(editState.date)[0].date;
+  }
   editDraw();
 }
+function edRepUntil(v){ edKeepInputs(); if(v) editState.repUntil = v; editDraw(); }
 function edUntil(v){ edKeepInputs(); if(v) editState.until = v; editDraw(); }
 
 function edClearTime(){
@@ -1060,7 +1081,7 @@ async function saveEdit(){
       if(!e.until){ alert("終了日を選んでください"); return; }
       list = rangeDays(e.date, e.until);
     } else {
-      list = repeatDates(new Date(e.date+"T00:00:00"), e.repeat);
+      list = repeatDates(new Date(e.date+"T00:00:00"), e.repeat, e.repUntil);
     }
     list = list.filter(ds => ds !== e.date);
     if(list.length){
@@ -1084,7 +1105,7 @@ function openAdd(){
   openAddFor(fmt(bd));
 }
 function openAddFor(ds){
-  addState = { member:null, text:"", slot:null, st:null, et:null, date:ds, until:null, repeat:"once" };
+  addState = { member:null, text:"", slot:null, st:null, et:null, date:ds, until:null, repeat:"once", repUntil:null };
   stepWho();
 }
 function stepWho(){
@@ -1187,10 +1208,27 @@ function stepWhen(){
       </div>` : ""}
     <div class="sh-lbl">繰り返し（毎週・毎日など）</div>
     <div class="chips">
-      <button class="chip ${addState.repeat==='daily'?'on':''}" onclick="pickRep('daily')">今月ずっと毎日</button>
+      <button class="chip ${addState.repeat==='daily'?'on':''}" onclick="pickRep('daily')">毎日</button>
       <button class="chip ${addState.repeat==='weekly'?'on':''}" onclick="pickRep('weekly')">毎週${WD[bd.getDay()]}曜</button>
       <button class="chip ${addState.repeat==='weekday'?'on':''}" onclick="pickRep('weekday')">平日だけ</button>
     </div>
+    ${['daily','weekly','weekday'].includes(addState.repeat) ? `
+      <div class="range-box">
+        <div class="sh-lbl" style="margin:0 0 9px">いつまで繰り返す？</div>
+        <div class="chips" style="margin-bottom:8px">
+          ${untilOptions(addState.date).map(o=>`
+            <button class="chip ${addState.repUntil===o.date?'on':''}"
+              onclick="pickRepUntil('${o.date}')">${o.label}</button>`).join("")}
+          <label class="chip datepick">日付を指定
+            <input type="date" min="${addState.date}" value="${addState.repUntil||''}"
+              onchange="pickRepUntil(this.value)">
+          </label>
+        </div>
+        <div class="range-cnt">
+          ${fmtJp(addState.date)} 〜 ${fmtJp(addState.repUntil)}<br>
+          ${repeatDates(new Date(addState.date+"T00:00:00"), addState.repeat, addState.repUntil).length}日分 を追加します
+        </div>
+      </div>` : ""}
     <button class="sh-btn" onclick="saveAdd()">この内容で追加 ✓</button>`);
 }
 function pickDate(ds){ addState.date = ds; stepWhen(); }
@@ -1206,8 +1244,12 @@ function clearTime(){ addState.st = null; addState.et = null; stepWhen(); }
 function pickRep(r){
   addState.repeat = r;
   if(r !== "range") addState.until = null;
+  if(['daily','weekly','weekday'].includes(r) && !addState.repUntil){
+    addState.repUntil = untilOptions(addState.date)[0].date;  // 既定は今月末
+  }
   stepWhen();
 }
+function pickRepUntil(v){ if(v) addState.repUntil = v; stepWhen(); }
 function pickUntil(v){ if(v) addState.until = v; stepWhen(); }
 function fmtJp(ds){
   const d = new Date(ds+"T00:00:00");
@@ -1234,7 +1276,7 @@ async function saveAdd(){
     if(!a.until){ alert("終了日を選んでください"); return; }
     dayList = rangeDays(a.date, a.until);
   } else {
-    dayList = repeatDates(base, a.repeat);
+    dayList = repeatDates(base, a.repeat, a.repUntil);
   }
   const rows = dayList.map(ds=>({
     member_id:a.member, task_date:ds, category:"other",
@@ -1250,19 +1292,36 @@ async function saveAdd(){
     alert("保存できませんでした");
   }
 }
-function repeatDates(base, rep){
+function repeatDates(base, rep, untilStr){
   if(rep==="once") return [fmt(base)];
-  const out = [];
-  const last = new Date(base.getFullYear(), base.getMonth()+1, 0).getDate();
+  const last = untilStr ? new Date(untilStr+"T00:00:00")
+    : new Date(base.getFullYear(), base.getMonth()+1, 0);
   const twd = base.getDay();
-  for(let d=base.getDate(); d<=last; d++){
-    const dt = new Date(base.getFullYear(), base.getMonth(), d);
-    const wd = dt.getDay();
-    if(rep==="daily") out.push(fmt(dt));
-    else if(rep==="weekly" && wd===twd) out.push(fmt(dt));
-    else if(rep==="weekday" && wd>=1 && wd<=5) out.push(fmt(dt));
+  const out = [];
+  const d = new Date(base);
+  let guard = 0;
+  while(d <= last && guard < 800){
+    const wd = d.getDay();
+    if(rep==="daily") out.push(fmt(d));
+    else if(rep==="weekly" && wd===twd) out.push(fmt(d));
+    else if(rep==="weekday" && wd>=1 && wd<=5) out.push(fmt(d));
+    d.setDate(d.getDate()+1);
+    guard++;
   }
   return out;
+}
+
+// 「いつまで」の候補
+function untilOptions(fromStr){
+  const f = new Date(fromStr+"T00:00:00");
+  const eom = new Date(f.getFullYear(), f.getMonth()+1, 0);
+  const add = n => { const x = new Date(f); x.setMonth(x.getMonth()+n); return x; };
+  return [
+    {k:"eom",  label:"今月末まで",  date:fmt(eom)},
+    {k:"m3",   label:"3ヶ月後まで", date:fmt(add(3))},
+    {k:"m6",   label:"半年後まで",  date:fmt(add(6))},
+    {k:"y1",   label:"1年後まで",   date:fmt(add(12))}
+  ];
 }
 
 /* ===== シート共通 ===== */
