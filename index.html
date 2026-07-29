@@ -280,6 +280,29 @@
   .legend-face{width:19px; height:19px; border-radius:50%; object-fit:cover;
     border:2px solid var(--line);}
 
+  /* ========== 予定一覧 ========== */
+  .ag-day{
+    display:flex; gap:12px; padding:11px 4px; border-top:1px solid var(--line2);
+    align-items:flex-start;
+  }
+  .ag-day:first-of-type{border-top:none;}
+  .ag-day.today{background:#eef7fe; border-radius:12px; padding:11px 8px;}
+  .ag-date{width:34px; flex-shrink:0; text-align:center;}
+  .ag-d{font-size:19px; font-weight:900; line-height:1;}
+  .ag-day.today .ag-d{color:var(--accent);}
+  .ag-w{font-size:10px; font-weight:800; color:var(--sub); margin-top:2px;}
+  .ag-w.sun{color:var(--red);} .ag-w.sat{color:var(--accent);}
+  .ag-list{flex:1; min-width:0; display:flex; flex-direction:column; gap:6px;}
+  .ag-row{display:flex; align-items:center; gap:8px; min-width:0;}
+  .ag-face{width:24px; height:24px; border-radius:50%; object-fit:cover;
+    border:2px solid var(--line); flex-shrink:0;}
+  .ag-tm{font-size:11.5px; font-weight:900; color:var(--accent-dark);
+    background:var(--accent-soft); padding:2px 7px; border-radius:6px; flex-shrink:0;}
+  .ag-tx{font-size:14px; font-weight:800; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap;}
+  .ag-row.done .ag-tx{color:var(--sub); text-decoration:line-through;}
+  .ag-row.done .ag-face{opacity:.5;}
+
   /* ========== じぶん（数字） ========== */
   .mine-sec{background:var(--panel); border:1px solid var(--line);
     border-radius:var(--r); padding:17px; margin-top:14px; box-shadow:var(--sh);}
@@ -455,6 +478,18 @@
     color:#a9927f; font-size:13px; padding:8px; font-weight:800; opacity:0;
     animation:fu .5s .85s forwards;}
 
+  @media (max-width:560px){
+    .cal-cell{min-height:74px; padding:4px 3px;}
+    .ev-chip{
+      font-size:0; padding:0; height:6px; border-radius:99px;
+      border-left:none; background:var(--c); box-shadow:none;
+    }
+    .ev-chip.done{opacity:.3;}
+    .ev-more{font-size:8.5px; padding:1px;}
+    .cell-dots{gap:2px;}
+    .md i{width:5px; height:5px;}
+    .md b{font-size:8.5px;}
+  }
   @media (max-width:359px){
     .col-head img{width:38px; height:38px;}
     .card .ct{font-size:11.5px;}
@@ -811,7 +846,7 @@ function celebCheck(t, phase, before){
 /* ================= 予定をいれる ================= */
 function openAdd(){
   const bd = boardDate();
-  addState = { member:null, text:"", slot:null, date:fmt(bd), repeat:"once" };
+  addState = { member:null, text:"", slot:null, st:null, et:null, date:fmt(bd), repeat:"once" };
   stepWho();
 }
 function stepWho(){
@@ -874,11 +909,23 @@ function stepWhen(){
         <input type="date" value="${addState.date}" onchange="pickDate(this.value)">
       </label>
     </div>
-    <div class="sh-lbl">時間帯</div>
+    <div class="sh-lbl">時間帯（かんたん選択）</div>
     <div class="chips">
-      ${TIMESLOTS.map(s=>`<button class="chip big ${addState.slot===s.k?'on':''}"
+      ${TIMESLOTS.map(s=>`<button class="chip big ${addState.slot===s.k && !addState.st ?'on':''}"
         onclick="pickSlot('${s.k}')">${s.ico} ${s.label}</button>`).join("")}
     </div>
+    <div class="sh-lbl">時間を指定する（任意）</div>
+    <div class="sh-row">
+      <input type="time" class="sh-input" id="stIn" value="${addState.st||''}"
+        onchange="setTime()">
+      <span style="font-weight:900;color:var(--sub)">〜</span>
+      <input type="time" class="sh-input" id="etIn" value="${addState.et||''}"
+        onchange="setTime()">
+    </div>
+    ${addState.st ? `<div class="rec-hint" style="margin:-8px 0 14px">
+      ${addState.st}${addState.et?" 〜 "+addState.et:""} で登録します
+      <button class="chip" style="padding:5px 12px;margin-left:8px"
+        onclick="clearTime()">時間を消す</button></div>` : ""}
     <div class="sh-lbl">繰り返し</div>
     <div class="chips">
       <button class="chip ${addState.repeat==='once'?'on':''}" onclick="pickRep('once')">この日だけ</button>
@@ -889,20 +936,29 @@ function stepWhen(){
     <button class="sh-btn" onclick="saveAdd()">この内容で追加 ✓</button>`);
 }
 function pickDate(ds){ addState.date = ds; stepWhen(); }
-function pickSlot(k){ addState.slot = k; stepWhen(); }
+function pickSlot(k){ addState.slot = k; addState.st = null; addState.et = null; stepWhen(); }
+function setTime(){
+  const a = document.getElementById("stIn").value || null;
+  const b = document.getElementById("etIn").value || null;
+  addState.st = a; addState.et = b;
+  if(a) addState.slot = null;
+  stepWhen();
+}
+function clearTime(){ addState.st = null; addState.et = null; stepWhen(); }
 function pickRep(r){ addState.repeat = r; stepWhen(); }
 
 async function saveAdd(){
   const a = addState;
   if(!a.member || !a.text){ alert("誰の・何をするかを選んでください"); return; }
   const slot = TIMESLOTS.find(s=>s.k===a.slot);
-  const st = slot ? slot.st : null;
+  const st = a.st || (slot ? slot.st : null);
+  const et = a.st ? a.et : null;
 
   const base = new Date(a.date+"T00:00:00");
   const dayList = repeatDates(base, a.repeat);
   const rows = dayList.map(ds=>({
     member_id:a.member, task_date:ds, category:"other",
-    text:a.text, sort_order:999, start_time:st, end_time:null
+    text:a.text, sort_order:999, start_time:st, end_time:et
   }));
   closeSheet();
   const { data, error } = await sb.from("tasks").insert(rows).select();
@@ -986,9 +1042,46 @@ function renderCal(){
     members.map(m=>`<span><img src="${IMG[m.id]}" class="legend-face">${esc(m.name)}</span>`).join("") +
     `<span>数字＝のこり件数</span></div></div>`;
 
+  html += renderAgenda();
   document.getElementById("app").innerHTML = html;
   buildMonthOptions();
 }
+// カレンダーの下の予定一覧（スマホでも読める）
+function renderAgenda(){
+  const td = todayDate();
+  let rows = "";
+  for(let d=1; d<=DAYS_IN_MONTH; d++){
+    const ds = dateStr(d);
+    const evs = [];
+    members.forEach(m=> eventsOf(m.id, d, ds).forEach(t=>evs.push({t,m})));
+    if(!evs.length) continue;
+    const wdi = new Date(YEAR,MONTH,d).getDay();
+    const wcls = wdi===0?"sun":(wdi===6?"sat":"");
+    rows += `<div class="ag-day ${d===td?'today':''}" onclick="selectCalDay(${d})">
+      <div class="ag-date">
+        <div class="ag-d">${d}</div>
+        <div class="ag-w ${wcls}">${WD[wdi]}</div>
+      </div>
+      <div class="ag-list">
+        ${evs.map(e=>{
+          const c = e.m.id==="kyosuke" ? "var(--c-me)" : e.m.id==="mother" ? "var(--c-mom)" : "var(--c-sis)";
+          const tm = e.t.start_time ? e.t.start_time.slice(0,5)
+            + (e.t.end_time ? "–"+e.t.end_time.slice(0,5) : "") : "";
+          return `<div class="ag-row ${isDone(e.t)?'done':''}">
+            <img src="${IMG[e.m.id]}" class="ag-face" style="border-color:${c}">
+            ${tm ? `<span class="ag-tm">${tm}</span>` : ""}
+            <span class="ag-tx">${esc(e.t.text)}</span>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>`;
+  }
+  if(!rows) rows = `<div class="col-empty" style="padding:26px">この月の予定はまだありません</div>`;
+  return `<div class="mine-sec">
+    <div class="mine-ttl">📋 ${MONTH+1}月の予定一覧 <small>タップで詳細</small></div>
+    ${rows}</div>`;
+}
+
 function selectCalDay(d){
   calSelectedDay = d;
   const ds = dateStr(d);
