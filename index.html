@@ -611,16 +611,16 @@ const MORNING_END = "12:00";
 
 /* よく使う予定（ワンタップ用） */
 const PRESETS = {
-  common: ["買いもの","そうじ","せんたく","ごはんを作る","ゴミ出し","病院","散歩","休み"],
-  kyosuke:["営業まわり","打ち合わせ","Uber","Nomi Go","ラーメンバイト","銀行"],
-  mother: ["買いもの","病院","そうじ","洗いもの","おでかけ","お茶"],
-  sister: ["仕事","買いもの","おでかけ","そうじ","予定あり"]
+  common: ["買い物","掃除","洗濯","食事の準備","ゴミ出し","病院","散歩","休み"],
+  kyosuke:["営業まわり","打ち合わせ","Uber稼働","Nomi Go","ラーメンバイト","銀行"],
+  mother: ["買い物","病院","掃除","洗い物","外出","お茶"],
+  sister: ["仕事","買い物","外出","掃除","予定あり"]
 };
 const TIMESLOTS = [
-  {k:"morning", label:"あさ",   ico:"🌅", st:"08:00"},
-  {k:"noon",    label:"ひる",   ico:"☀️", st:"12:00"},
-  {k:"eve",     label:"よる",   ico:"🌙", st:"18:00"},
-  {k:"any",     label:"いつでも", ico:"🕐", st:null}
+  {k:"morning", label:"朝",     ico:"🌅", st:"08:00"},
+  {k:"noon",    label:"昼",   ico:"☀️", st:"12:00"},
+  {k:"eve",     label:"夜",   ico:"🌙", st:"18:00"},
+  {k:"any",     label:"時間未定", ico:"🕐", st:null}
 ];
 
 /* ===== 状態 ===== */
@@ -883,87 +883,136 @@ function celebCheck(t, phase, before){
 }
 
 /* ================= 予定を編集する ================= */
+let editState = null;
+
 function openEdit(id){
   const t = tasks.find(x=>x.id===id);
   if(!t) return;
-  const m = members.find(x=>x.id===t.member_id) || {};
-  const d = new Date(t.task_date+"T00:00:00");
+  editState = {
+    id, member:t.member_id, text:t.text, date:t.task_date,
+    st: t.start_time ? t.start_time.slice(0,5) : null,
+    et: t.end_time ? t.end_time.slice(0,5) : null,
+    slot: null
+  };
+  // 開始時刻がプリセットと一致すれば時間帯として扱う
+  const hit = TIMESLOTS.find(x=>x.st && x.st === editState.st);
+  if(hit && !editState.et){ editState.slot = hit.k; editState.st = null; }
+  if(!t.start_time) editState.slot = "any";
+  editDraw();
+}
+
+function editDraw(){
+  const e = editState;
+  const pre = [...new Set((PRESETS[e.member]||[]).concat(PRESETS.common))];
+  const d = new Date(e.date+"T00:00:00");
 
   openSheet(`
-    <button class="sh-back" onclick="openDetail('${id}')">‹ 戻る</button>
-    <div class="sh-step">へんしゅう</div>
-    <div class="sh-q">予定を変える</div>
+    <button class="sh-back" onclick="openDetail('${e.id}')">‹ 戻る</button>
+    <div class="sh-step">編集</div>
+    <div class="sh-q">予定を変更する</div>
 
-    <div class="sh-lbl">だれの予定</div>
-    <div class="pick-fam" style="margin-bottom:16px">
-      ${members.map(x=>`
-        <button class="${x.id===t.member_id?'on':''}" onclick="editSet('${id}','member_id','${x.id}')">
-          <img src="${IMG[x.id]}" alt=""><span>${esc(x.name)}</span>
+    <div class="sh-lbl">誰の予定</div>
+    <div class="pick-fam" style="margin-bottom:18px">
+      ${members.map(m=>`
+        <button class="${e.member===m.id?'on':''}" onclick="edSet('member','${m.id}')">
+          <img src="${IMG[m.id]}" alt=""><span>${esc(m.name)}</span>
         </button>`).join("")}
     </div>
 
     <div class="sh-lbl">内容</div>
-    <input class="sh-input" id="edText" value="${esc(t.text)}">
+    <div class="chips">
+      ${pre.map(p=>`<button class="chip ${e.text===p?'on':''}"
+        onclick="edSet('text','${esc(p)}')">${esc(p)}</button>`).join("")}
+    </div>
+    <input class="sh-input" id="edText" value="${esc(e.text)}"
+      placeholder="内容を入力" onchange="edSetText(this.value)">
 
     <div class="sh-lbl">日付</div>
-    <div class="datenav" style="margin-bottom:14px">
-      <button onclick="editShiftDate('${id}',-1)">‹</button>
+    <div class="datenav" style="margin-bottom:8px">
+      <button onclick="edShiftDate(-1)">‹</button>
       <label class="datebox">
         <span>${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）</span>
-        <input type="date" value="${t.task_date}" onchange="editSet('${id}','task_date',this.value)">
+        <input type="date" value="${e.date}" onchange="edSet('date',this.value)">
       </label>
-      <button onclick="editShiftDate('${id}',1)">›</button>
+      <button onclick="edShiftDate(1)">›</button>
+    </div>
+    <div class="chips">
+      ${[0,1].map(o=>{
+        const x = new Date(today); x.setDate(x.getDate()+o);
+        return `<button class="chip ${e.date===fmt(x)?'on':''}"
+          onclick="edSet('date','${fmt(x)}')">${o===0?"今日":"明日"}</button>`;
+      }).join("")}
     </div>
 
-    <div class="sh-lbl">時間（空にすると時間なし）</div>
+    <div class="sh-lbl">時間帯（かんたん選択）</div>
+    <div class="chips">
+      ${TIMESLOTS.map(x=>`<button class="chip big ${e.slot===x.k && !e.st ?'on':''}"
+        onclick="edSlot('${x.k}')">${x.ico} ${x.label}</button>`).join("")}
+    </div>
+    <div class="sh-lbl">時間を指定する（任意）</div>
     <div class="sh-row">
-      <input type="time" class="sh-input" id="edSt" value="${t.start_time?t.start_time.slice(0,5):''}">
+      <input type="time" class="sh-input" id="edSt" value="${e.st||''}" onchange="edTime()">
       <span style="font-weight:900;color:var(--sub)">〜</span>
-      <input type="time" class="sh-input" id="edEt" value="${t.end_time?t.end_time.slice(0,5):''}">
+      <input type="time" class="sh-input" id="edEt" value="${e.et||''}" onchange="edTime()">
     </div>
+    ${e.st ? `<div class="rec-hint" style="margin:-8px 0 14px">
+      ${e.st}${e.et?" 〜 "+e.et:""} で保存します
+      <button class="chip" style="padding:5px 12px;margin-left:8px"
+        onclick="edClearTime()">時間を消す</button></div>` : ""}
 
-    <button class="sh-btn" onclick="saveEdit('${id}')">この内容で保存 ✓</button>
-    <button class="sh-btn sub" onclick="openDetail('${id}')">やめる</button>`);
+    <button class="sh-btn" onclick="saveEdit()">この内容で保存 ✓</button>
+    <button class="sh-btn sub" onclick="openDetail('${e.id}')">キャンセル</button>`);
 }
 
-async function editSet(id, field, value){
-  const t = tasks.find(x=>x.id===id);
-  if(!t) return;
-  // 入力中の内容を保持したまま切り替える
+function edKeepInputs(){
   const tx = document.getElementById("edText");
-  if(tx) t.text = tx.value.trim() || t.text;
-  const st = document.getElementById("edSt"), et = document.getElementById("edEt");
-  if(st) t.start_time = st.value || null;
-  if(et) t.end_time = et.value || null;
-
-  t[field] = value;
-  openEdit(id);
-  await sb.from("tasks").update({[field]:value}).eq("id",id);
-  renderTop(); render();
+  if(tx && tx.value.trim()) editState.text = tx.value.trim();
 }
-
-function editShiftDate(id, diff){
-  const t = tasks.find(x=>x.id===id);
-  if(!t) return;
-  const d = new Date(t.task_date+"T00:00:00");
+function edSet(field, value){ edKeepInputs(); editState[field] = value; editDraw(); }
+function edSetText(v){ if(v.trim()) editState.text = v.trim(); }
+function edShiftDate(diff){
+  edKeepInputs();
+  const d = new Date(editState.date+"T00:00:00");
   d.setDate(d.getDate()+diff);
-  editSet(id, "task_date", fmt(d));
+  editState.date = fmt(d);
+  editDraw();
+}
+function edSlot(k){
+  edKeepInputs();
+  editState.slot = k; editState.st = null; editState.et = null;
+  editDraw();
+}
+function edTime(){
+  edKeepInputs();
+  editState.st = document.getElementById("edSt").value || null;
+  editState.et = document.getElementById("edEt").value || null;
+  if(editState.st) editState.slot = null;
+  editDraw();
+}
+function edClearTime(){
+  edKeepInputs();
+  editState.st = null; editState.et = null; editState.slot = "any";
+  editDraw();
 }
 
-async function saveEdit(id){
-  const t = tasks.find(x=>x.id===id);
+async function saveEdit(){
+  edKeepInputs();
+  const e = editState;
+  const t = tasks.find(x=>x.id===e.id);
   if(!t) return;
-  const text = (document.getElementById("edText").value || "").trim();
-  if(!text){ alert("内容を入力してください"); return; }
-  const st = document.getElementById("edSt").value || null;
-  const et = document.getElementById("edEt").value || null;
+  if(!e.text){ alert("内容を入力してください"); return; }
 
-  t.text = text; t.start_time = st; t.end_time = et;
+  const slot = TIMESLOTS.find(x=>x.k===e.slot);
+  const st = e.st || (slot ? slot.st : null);
+  const et = e.st ? e.et : null;
+
+  t.member_id = e.member; t.text = e.text; t.task_date = e.date;
+  t.start_time = st; t.end_time = et;
   closeSheet(); renderTop(); render();
   await sb.from("tasks").update({
-    text:t.text, start_time:t.start_time, end_time:t.end_time,
-    member_id:t.member_id, task_date:t.task_date
-  }).eq("id",id);
+    member_id:t.member_id, text:t.text, task_date:t.task_date,
+    start_time:t.start_time, end_time:t.end_time
+  }).eq("id", e.id);
 }
 
 /* ================= 予定をいれる ================= */
@@ -1008,7 +1057,7 @@ function stepWhat(){
 function pickWhat(p){ addState.text = p; stepWhen(); }
 function pickWhatFree(){
   const v = (document.getElementById("freeText").value || "").trim();
-  if(!v){ alert("なにを するか かいてください"); return; }
+  if(!v){ alert("内容を入力してください"); return; }
   addState.text = v; stepWhen();
 }
 
