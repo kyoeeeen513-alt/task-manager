@@ -725,7 +725,7 @@ function renderTop(){
   if(fp && !fp.src) fp.src = IMG.header;
   const bd = boardDate();
   document.getElementById("todayStr").innerHTML =
-    `${bd.getMonth()+1}月${bd.getDate()}日<small>${WD[bd.getDay()]}よう日</small>`;
+    `${bd.getMonth()+1}月${bd.getDate()}日<small>${WD[bd.getDay()]}曜日</small>`;
   document.getElementById("topFam").innerHTML =
     members.map(m=>`<img src="${IMG[m.id]}" alt="">`).join("");
 
@@ -734,7 +734,7 @@ function renderTop(){
     const ds = fmt(dt);
     let tot=0, rem=0;
     members.forEach(m=>{ const x=tasksForDs(m.id, ds); tot+=x.length; rem+=x.filter(t=>!isDone(t)).length; });
-    return tot===0 ? "予定なし" : (rem===0 ? "すべて完了" : `のこり ${rem}件`);
+    return tot===0 ? "予定なし" : (rem===0 ? "全て完了" : `のこり ${rem}件`);
   };
   document.getElementById("daySw").innerHTML = `
     <button class="${boardOffset===0?'on':''}" onclick="setDay(0)">今日<small>${c(t0)}</small></button>
@@ -771,7 +771,7 @@ function renderBoard(){
     if(dt.length === 0){
       body = `<div class="col-empty">予定<br>なし</div>`;
     } else if(allDone){
-      body = `<div class="col-clear"><span class="em">🎉</span>すべて<br>完了！</div>`;
+      body = `<div class="col-clear"><span class="em">🎉</span>全て<br>完了！</div>`;
       body += dt.map(t=>cardHtml(t, m)).join("");
     } else {
       const groups = [
@@ -827,7 +827,7 @@ function openDetail(id){
   if(!t) return;
   const m = members.find(x=>x.id===t.member_id) || {};
   const tm = t.start_time ? t.start_time.slice(0,5) + (t.end_time? " 〜 "+t.end_time.slice(0,5) : "") : "時間指定なし";
-  const st = t.skipped ? "今日はお休み" : (t.done ? "完了しました" : "まだです");
+  const st = t.skipped ? "今日はお休み" : (t.done ? "完了しました" : "未完了");
 
   openSheet(`
     <div class="det-t">${esc(t.text)}</div>
@@ -892,7 +892,7 @@ function openEdit(id){
     id, member:t.member_id, text:t.text, date:t.task_date,
     st: t.start_time ? t.start_time.slice(0,5) : null,
     et: t.end_time ? t.end_time.slice(0,5) : null,
-    slot: null
+    slot: null, repeat:"once", until:null
   };
   // 開始時刻がプリセットと一致すれば時間帯として扱う
   const hit = TIMESLOTS.find(x=>x.st && x.st === editState.st);
@@ -928,20 +928,24 @@ function editDraw(){
       placeholder="内容を入力" onchange="edSetText(this.value)">
 
     <div class="sh-lbl">日付</div>
-    <div class="datenav" style="margin-bottom:8px">
+    <div class="chips">
+      ${[0,1,2].map(o=>{
+        const x = new Date(today); x.setDate(x.getDate()+o);
+        const lbl = o===0?"今日":(o===1?"明日":`${x.getMonth()+1}/${x.getDate()}`);
+        return `<button class="chip ${e.date===fmt(x)?'on':''}"
+          onclick="edSet('date','${fmt(x)}')">${lbl}</button>`;
+      }).join("")}
+      <label class="chip datepick">他の日を選ぶ
+        <input type="date" value="${e.date}" onchange="edSet('date',this.value)">
+      </label>
+    </div>
+    <div class="datenav" style="margin-bottom:16px">
       <button onclick="edShiftDate(-1)">‹</button>
       <label class="datebox">
         <span>${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）</span>
         <input type="date" value="${e.date}" onchange="edSet('date',this.value)">
       </label>
       <button onclick="edShiftDate(1)">›</button>
-    </div>
-    <div class="chips">
-      ${[0,1].map(o=>{
-        const x = new Date(today); x.setDate(x.getDate()+o);
-        return `<button class="chip ${e.date===fmt(x)?'on':''}"
-          onclick="edSet('date','${fmt(x)}')">${o===0?"今日":"明日"}</button>`;
-      }).join("")}
     </div>
 
     <div class="sh-lbl">時間帯（かんたん選択）</div>
@@ -959,6 +963,32 @@ function editDraw(){
       ${e.st}${e.et?" 〜 "+e.et:""} で保存します
       <button class="chip" style="padding:5px 12px;margin-left:8px"
         onclick="edClearTime()">時間を消す</button></div>` : ""}
+
+    <div class="sh-lbl">この日だけ / 連日</div>
+    <div class="chips">
+      <button class="chip big ${e.repeat==='once'?'on':''}" onclick="edRep('once')">この日だけ</button>
+      <button class="chip big ${e.repeat==='range'?'on':''}" onclick="edRep('range')">📅 連日（期間）</button>
+    </div>
+    ${e.repeat==='range' ? `
+      <div class="range-box">
+        <div class="range-line"><span class="range-l">開始</span><b>${fmtJp(e.date)}</b></div>
+        <div class="range-line">
+          <span class="range-l">終了</span>
+          <label class="datebox" style="padding:10px">
+            <span>${e.until ? fmtJp(e.until) : "日付を選ぶ"}</span>
+            <input type="date" min="${e.date}" value="${e.until||''}" onchange="edUntil(this.value)">
+          </label>
+        </div>
+        ${e.until ? `<div class="range-cnt">${rangeDays(e.date, e.until).length}日間 に追加します</div>` : ""}
+      </div>` : ""}
+    <div class="sh-lbl">繰り返し（毎週・毎日など）</div>
+    <div class="chips">
+      <button class="chip ${e.repeat==='daily'?'on':''}" onclick="edRep('daily')">今月ずっと毎日</button>
+      <button class="chip ${e.repeat==='weekly'?'on':''}" onclick="edRep('weekly')">毎週${WD[d.getDay()]}曜</button>
+      <button class="chip ${e.repeat==='weekday'?'on':''}" onclick="edRep('weekday')">平日だけ</button>
+    </div>
+    ${e.repeat!=='once' ? `<div class="rec-hint" style="margin:-6px 0 14px">
+      ※ この予定を変更し、他の日にも同じ予定を追加します</div>` : ""}
 
     <button class="sh-btn" onclick="saveEdit()">この内容で保存 ✓</button>
     <button class="sh-btn sub" onclick="openDetail('${e.id}')">キャンセル</button>`);
@@ -989,6 +1019,14 @@ function edTime(){
   if(editState.st) editState.slot = null;
   editDraw();
 }
+function edRep(r){
+  edKeepInputs();
+  editState.repeat = r;
+  if(r !== "range") editState.until = null;
+  editDraw();
+}
+function edUntil(v){ edKeepInputs(); if(v) editState.until = v; editDraw(); }
+
 function edClearTime(){
   edKeepInputs();
   editState.st = null; editState.et = null; editState.slot = "any";
@@ -1006,6 +1044,7 @@ async function saveEdit(){
   const st = e.st || (slot ? slot.st : null);
   const et = e.st ? e.et : null;
 
+  // この予定そのものを更新
   t.member_id = e.member; t.text = e.text; t.task_date = e.date;
   t.start_time = st; t.end_time = et;
   closeSheet(); renderTop(); render();
@@ -1013,6 +1052,30 @@ async function saveEdit(){
     member_id:t.member_id, text:t.text, task_date:t.task_date,
     start_time:t.start_time, end_time:t.end_time
   }).eq("id", e.id);
+
+  // 繰り返し・連日が選ばれていれば、ほかの日にも追加
+  if(e.repeat !== "once"){
+    let list;
+    if(e.repeat === "range"){
+      if(!e.until){ alert("終了日を選んでください"); return; }
+      list = rangeDays(e.date, e.until);
+    } else {
+      list = repeatDates(new Date(e.date+"T00:00:00"), e.repeat);
+    }
+    list = list.filter(ds => ds !== e.date);
+    if(list.length){
+      const rows = list.map(ds=>({
+        member_id:e.member, task_date:ds, category:"other",
+        text:e.text, sort_order:999, start_time:st, end_time:et
+      }));
+      const { data, error } = await sb.from("tasks").insert(rows).select();
+      if(!error){
+        tasks = tasks.concat(data);
+        renderTop(); render();
+        alert(`他の ${list.length}日 にも追加しました`);
+      }
+    }
+  }
 }
 
 /* ================= 予定をいれる ================= */
@@ -1101,7 +1164,7 @@ function stepWhen(){
       ${addState.st}${addState.et?" 〜 "+addState.et:""} で登録します
       <button class="chip" style="padding:5px 12px;margin-left:8px"
         onclick="clearTime()">時間を消す</button></div>` : ""}
-    <div class="sh-lbl">この日だけ？ 何日か続く？</div>
+    <div class="sh-lbl">この日だけ / 連日</div>
     <div class="chips">
       <button class="chip big ${addState.repeat==='once'?'on':''}" onclick="pickRep('once')">この日だけ</button>
       <button class="chip big ${addState.repeat==='range'?'on':''}" onclick="pickRep('range')">📅 連日（期間）</button>
@@ -1122,7 +1185,7 @@ function stepWhen(){
         </div>
         ${addState.until ? `<div class="range-cnt">${rangeDays(addState.date, addState.until).length}日間 に追加します</div>` : ""}
       </div>` : ""}
-    <div class="sh-lbl">くり返し（毎週・毎日など）</div>
+    <div class="sh-lbl">繰り返し（毎週・毎日など）</div>
     <div class="chips">
       <button class="chip ${addState.repeat==='daily'?'on':''}" onclick="pickRep('daily')">今月ずっと毎日</button>
       <button class="chip ${addState.repeat==='weekly'?'on':''}" onclick="pickRep('weekly')">毎週${WD[bd.getDay()]}曜</button>
@@ -1689,7 +1752,7 @@ function doDraw(key){
         <div class="omi-item-l">LUCKY ITEM</div>
         <div class="omi-item-v">${f.item}</div>
       </div>
-      <button class="omi-close" onclick="closeOmi()">閉じて今日をはじめる</button>
+      <button class="omi-close" onclick="closeOmi()">閉じて今日を始める</button>
     </div>`;
   if(f.luck.name === "大吉") confetti(el);
 }
