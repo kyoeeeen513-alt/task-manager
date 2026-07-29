@@ -2,677 +2,471 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>タスク管理</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>かぞくの よてい</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
-    --bg:#f2f6fa;
-    --panel:#ffffff;
-    --panel2:#f4f8fb;
-    --line:#e2ebf2;
-    --line2:#eef4f8;
-    --ink:#16293a;
-    --ink2:#3d5568;
-    --sub:#7d94a8;
-    --accent:#2f8fd6;
-    --accent-dark:#1f74b5;
-    --accent-soft:#e6f2fc;
-    --green:#2eb489;
-    --green-soft:#e4f7f1;
+    --bg:#f0f5f9; --panel:#fff; --panel2:#f5f9fc; --line:#e3ecf3; --line2:#eff5f9;
+    --ink:#152838; --ink2:#3b5468; --sub:#7a92a6;
+    --accent:#2f8fd6; --accent-dark:#1d72b4; --accent-soft:#e6f2fc;
+    --green:#2eb489; --green-soft:#e2f7f0;
+    --orange:#f0973c; --orange-soft:#fff3e4;
     --red:#e2705f;
-    --orange:#f0973c;
-    --orange-soft:#fff3e4;
-    --gold:#2f8fd6;
-    --uber:#3f9ae0;
-    --eigyou:#8a7fd4;
-    --daily:#7d94a8;
-    --nomigo:#f0973c;
-    --r-lg:20px;
-    --r-md:15px;
-    --r-sm:11px;
-    --sh:0 2px 10px rgba(22,60,95,.06);
-    --sh-lg:0 10px 30px rgba(22,60,95,.12);
+    --c-me:#2f8fd6; --c-mom:#f2833f; --c-sis:#8a6fd6;
+    --r:18px; --r2:13px;
+    --sh:0 2px 10px rgba(20,60,95,.07);
+    --sh2:0 10px 28px rgba(20,60,95,.14);
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   body{
-    margin:0;
-    background:var(--bg);
-    color:var(--ink);
+    margin:0; background:var(--bg); color:var(--ink);
     font-family:"Hiragino Sans","Noto Sans JP",-apple-system,sans-serif;
-    -webkit-font-smoothing:antialiased;
-    padding-bottom:70px;
-    font-size:15px;
-    line-height:1.6;
+    -webkit-font-smoothing:antialiased; font-size:15px; line-height:1.6;
+    padding-bottom:calc(88px + env(safe-area-inset-bottom));
   }
-  button{font-family:inherit;}
+  button{font-family:inherit; cursor:pointer;}
+  .wrap{max-width:840px; margin:0 auto; padding:0 12px;}
 
-  /* ================= ヘッダー ================= */
-  .banner{width:100%; max-width:820px; margin:0 auto; padding:10px 12px 0; position:relative;}
-  .banner img{width:100%; display:block; border-radius:var(--r-lg);
-    box-shadow:0 10px 28px rgba(22,60,95,.16);}
-  .head-inner{max-width:820px; margin:0 auto; padding:16px 14px 6px;}
-
-  .title-row{display:flex; align-items:center; justify-content:space-between;
-    gap:10px; margin:0 0 16px;}
-  .brand{display:flex; flex-direction:column; gap:1px;}
-  h1{font-size:24px; margin:0; font-weight:800; letter-spacing:.01em; line-height:1.2;}
-  h1 .accent{color:var(--accent);}
-  .brand-sub{font-size:10px; color:var(--sub); letter-spacing:.14em; font-weight:700;}
-
-  .month-nav{display:flex; align-items:center; gap:5px;
-    background:var(--panel); border-radius:999px; padding:4px;
-    box-shadow:var(--sh); border:1px solid var(--line);}
-  .month-nav button{
-    background:none; border:none; color:var(--accent);
-    width:32px; height:32px; border-radius:50%; font-size:18px; cursor:pointer;
-    display:flex; align-items:center; justify-content:center; font-weight:700;
+  /* ========== 上部 ========== */
+  .topbar{
+    background:var(--panel); border-bottom:1px solid var(--line);
+    padding:12px 0 10px; position:sticky; top:0; z-index:40;
+    box-shadow:0 1px 8px rgba(20,60,95,.05);
   }
-  .month-nav button:active{background:var(--accent-soft);}
-  .month-nav select{
-    background:none; border:none; color:var(--ink);
-    padding:4px 2px; font-size:14px; font-weight:800; text-align:center;
-    -webkit-appearance:none; appearance:none;
-  }
-
-  /* ================= メンバー切替 ================= */
-  .member-tabs{display:flex; gap:7px; margin-bottom:12px;}
-  .member-tab{
-    flex:1; min-width:0; background:var(--panel);
-    border:2px solid var(--line); border-radius:var(--r-md);
-    padding:11px 4px 9px; text-align:center; cursor:pointer;
-    display:flex; flex-direction:column; align-items:center; gap:6px;
-    box-shadow:var(--sh); position:relative;
-    transition:transform .2s, border-color .2s, background .2s;
-  }
-  .member-tab:active{transform:scale(.97);}
-  .member-tab > img{
-    width:44px; height:44px; border-radius:50%; object-fit:cover;
-    border:2.5px solid var(--line2); transition:border-color .2s;
-  }
-  .all-faces{display:flex; justify-content:center; height:44px; align-items:center;}
-  .all-faces img{
+  .top-in{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .today-str{font-size:19px; font-weight:900; letter-spacing:.01em;}
+  .today-str small{font-size:12px; color:var(--sub); font-weight:800; margin-left:6px;}
+  .top-fam{display:flex;}
+  .top-fam img{
     width:30px; height:30px; border-radius:50%; object-fit:cover;
-    border:2.5px solid var(--panel); margin-left:-11px;
+    border:2.5px solid var(--panel); margin-left:-9px;
   }
-  .all-faces img:first-child{margin-left:0;}
-  .member-tab .mn{font-size:13.5px; font-weight:800; color:var(--ink2); line-height:1.2;}
-  .member-tab .mrem{
-    font-size:11px; font-weight:700; color:var(--sub);
-    background:var(--panel2); border-radius:999px; padding:2px 9px;
-    white-space:nowrap; line-height:1.5;
-  }
-  .member-tab .mrem.done{background:var(--green-soft); color:var(--green);}
-  .member-tab .mrem.left{background:var(--orange-soft); color:#c9762a;}
+  .top-fam img:first-child{margin-left:0;}
 
-  .member-tab.active{background:var(--accent-soft); border-color:var(--accent);}
-  .member-tab.active .mn{color:var(--accent-dark);}
-  .member-tab.active > img{border-color:var(--accent);}
-  .member-tab.all.active{background:var(--green-soft); border-color:var(--green);}
-  .member-tab.all.active .mn{color:#1c8e69;}
-  .member-tab.active[data-m="sister"]{background:#f1eefc; border-color:var(--eigyou);}
-  .member-tab.active[data-m="sister"] .mn{color:#6a5bc0;}
-  .member-tab.active[data-m="sister"] > img{border-color:var(--eigyou);}
-  .member-tab.active[data-m="mother"]{background:#e9f4fd; border-color:var(--uber);}
-  .member-tab.active[data-m="mother"] .mn{color:#2680c4;}
-  .member-tab.active[data-m="mother"] > img{border-color:var(--uber);}
+  /* 日付の切り替え（きょう / あした） */
+  .daysw{display:flex; gap:8px; margin:12px 0 0;}
+  .daysw button{
+    flex:1; border:none; border-radius:999px; padding:12px 0;
+    font-size:15px; font-weight:900; background:var(--panel2); color:var(--sub);
+    border:2px solid transparent; transition:.18s;
+  }
+  .daysw button.on{background:var(--accent); color:#fff; box-shadow:0 6px 16px rgba(47,143,214,.32);}
+  .daysw button small{display:block; font-size:10.5px; font-weight:700; opacity:.8; margin-top:1px;}
 
-  /* ================= ビュー切替 ================= */
-  .view-tabs{
-    display:flex; gap:4px; background:var(--panel); padding:5px;
-    border-radius:999px; box-shadow:var(--sh); border:1px solid var(--line);
+  /* ========== ボード ========== */
+  .board{margin-top:14px;}
+  .board-ttl{
+    display:flex; align-items:baseline; gap:9px; margin:0 2px 9px;
   }
-  .view-tab{
-    flex:1; padding:11px 0 9px; border-radius:999px; background:none;
-    border:none; color:var(--sub); cursor:pointer; text-align:center;
-    font-size:13px; font-weight:700; line-height:1.2;
-    transition:background .22s, color .22s, transform .22s;
-  }
-  .view-tab .vi{display:block; font-size:17px; margin-bottom:3px; opacity:.6;}
-  .view-tab.active{background:var(--accent); color:#fff;}
-  .view-tab.active .vi{opacity:1;}
-  .view-tab:active{transform:scale(.96);}
+  .board-ttl h2{font-size:17px; margin:0; font-weight:900;}
+  .board-ttl span{font-size:12px; color:var(--sub); font-weight:800;}
 
-  main{padding:16px 14px 40px; max-width:820px; margin:0 auto;}
+  .cols{display:grid; grid-template-columns:repeat(3,1fr); gap:9px;}
+  .col{
+    background:var(--panel); border-radius:var(--r);
+    border:2px solid var(--line); overflow:hidden; box-shadow:var(--sh);
+    display:flex; flex-direction:column;
+  }
+  .col.done{border-color:#b9e8d6; background:linear-gradient(180deg,#f2fcf8,#fff);}
+  .col-head{
+    padding:11px 6px 9px; text-align:center; color:#fff;
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+  }
+  .col.me   .col-head{background:linear-gradient(135deg,#2f8fd6,#57b4ec);}
+  .col.mom  .col-head{background:linear-gradient(135deg,#f2833f,#f7a86b);}
+  .col.sis  .col-head{background:linear-gradient(135deg,#8a6fd6,#a892e6);}
+  .col-head img{width:44px; height:44px; border-radius:50%; object-fit:cover;
+    border:3px solid rgba(255,255,255,.85);}
+  .col-name{font-size:14px; font-weight:900;}
+  .col-badge{
+    font-size:11px; font-weight:900; background:rgba(255,255,255,.26);
+    border-radius:999px; padding:3px 10px;
+  }
+  .col-badge.ok{background:#fff; color:var(--green);}
+  .col-body{padding:8px 7px 10px; flex:1; display:flex; flex-direction:column; gap:6px;}
 
-  /* ================= 今日のまとめ ================= */
-  .hero{
-    background:linear-gradient(135deg,#2f8fd6,#57b4ec);
-    border-radius:var(--r-lg); padding:20px 20px 18px; color:#fff;
-    box-shadow:0 12px 30px rgba(47,143,214,.32); margin-bottom:16px;
-    position:relative; overflow:hidden;
+  .slot{margin-top:4px;}
+  .slot-l{
+    font-size:10px; font-weight:900; color:var(--sub); letter-spacing:.08em;
+    padding:0 3px 4px; display:flex; align-items:center; gap:4px;
   }
-  .hero::after{
-    content:""; position:absolute; right:-40px; top:-40px;
-    width:150px; height:150px; border-radius:50%;
-    background:rgba(255,255,255,.10);
-  }
-  .hero-lbl{font-size:11.5px; font-weight:700; letter-spacing:.12em; opacity:.9;}
-  .hero-main{display:flex; align-items:flex-end; gap:12px; margin-top:6px;}
-  .hero-num{font-size:46px; font-weight:900; line-height:1;}
-  .hero-unit{font-size:15px; font-weight:700; padding-bottom:6px; opacity:.95;}
-  .hero-msg{font-size:14px; font-weight:700; margin-top:8px;}
-  .hero-bar{height:8px; background:rgba(255,255,255,.28); border-radius:99px;
-    margin-top:13px; overflow:hidden;}
-  .hero-fill{height:100%; background:#fff; border-radius:99px; transition:width .4s;}
-  .hero-foot{display:flex; justify-content:space-between; align-items:center;
-    margin-top:8px; font-size:11.5px; font-weight:700; opacity:.95;}
-  .hero.done{background:linear-gradient(135deg,#2eb489,#5fd2ad);
-    box-shadow:0 12px 30px rgba(46,180,137,.32);}
-  .hero-jump{
-    background:rgba(255,255,255,.22); border:none; color:#fff;
-    font-size:11.5px; font-weight:800; padding:6px 14px; border-radius:999px;
-    cursor:pointer;
-  }
+  .slot-l i{font-size:12px;}
 
-  /* ================= 数字カード ================= */
-  .money-wrap{
-    background:var(--panel); border:1px solid var(--line);
-    border-radius:var(--r-lg); padding:15px; margin-bottom:16px;
-    box-shadow:var(--sh);
-  }
-  .money-head{display:flex; align-items:center; justify-content:space-between;
-    margin-bottom:12px;}
-  .money-ttl{font-size:13px; font-weight:800; color:var(--ink2);
-    display:flex; align-items:center; gap:6px;}
-  .money-ttl .mi{font-size:15px;}
-  .money-pct{font-size:13px; font-weight:900; color:var(--accent);}
-
-  .pace-box{
-    background:linear-gradient(135deg,#eaf4fd,#f3f9fe);
-    border:1px solid #d5e8f7; border-radius:var(--r-md);
-    padding:13px 15px; margin-bottom:12px;
-  }
-  .pace-top{display:flex; align-items:baseline; justify-content:space-between; gap:10px;}
-  .pace-msg{font-size:12.5px; font-weight:700; color:var(--ink2);}
-  .pace-msg b{font-size:18px; font-weight:900; color:var(--accent-dark);}
-  .pace-pct{font-size:16px; font-weight:900; color:var(--accent);}
-  .pace-bar{height:7px; background:#d9e9f6; border-radius:99px;
-    margin-top:9px; overflow:hidden;}
-  .pace-fill{height:100%; background:linear-gradient(90deg,var(--accent),#68bdf0);
-    border-radius:99px; transition:width .35s;}
-
-  .goal-strip{display:flex; gap:9px;}
-  .goal-card{flex:1 1 0; min-width:0; background:var(--panel2);
-    border:1px solid var(--line); border-radius:var(--r-md); padding:12px 11px;}
-  .goal-card .label{font-size:10.5px; color:var(--sub); font-weight:700;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .goal-card .value{font-size:17px; font-weight:900; margin-top:4px; letter-spacing:-.02em;}
-  .goal-card.uber .value{color:var(--uber);}
-  .goal-card.eigyou .value{color:var(--eigyou);}
-  .goal-card.total .value{color:var(--accent);}
-  .goal-card .sub{font-size:10.5px; color:var(--sub); margin-top:3px; font-weight:600;}
-  .goal-card .sub.remain{color:var(--red); font-weight:800;}
-  .goal-card .sub.remain.achieved{color:var(--green);}
-  .goal-card .sub.pace{color:var(--accent); font-weight:800; margin-top:5px;
-    background:#fff; border-radius:7px; padding:3px 7px; display:inline-block;}
-
-  /* ================= 日リスト ================= */
-  .day-block{
-    background:var(--panel); border:1px solid var(--line);
-    border-radius:var(--r-md); margin-bottom:9px; overflow:hidden;
-    box-shadow:var(--sh); transition:box-shadow .2s, border-color .2s;
-  }
-  .day-block.all-done{background:linear-gradient(180deg,#f4fcf9,#fff);
-    border-color:#c9ecdf;}
-  .day-block.is-today{
-    border:2.5px solid var(--accent);
-    background:linear-gradient(180deg,#f3faff,#ffffff);
-    box-shadow:0 12px 28px rgba(47,143,214,.2);
-    margin:16px 0 18px;
-  }
-  .day-head{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:14px 16px; cursor:pointer; user-select:none; gap:10px;
-  }
-  .day-block.is-today .day-head{padding:18px 18px;}
-  .day-head .left{display:flex; align-items:center; gap:12px; min-width:0; flex:1;}
-  .day-date{display:flex; flex-direction:column; align-items:center;
-    width:38px; flex-shrink:0;}
-  .day-num{font-size:20px; font-weight:900; line-height:1;}
-  .day-block.is-today .day-num{font-size:30px; color:var(--accent);}
-  .day-weekday{font-size:10.5px; color:var(--sub); font-weight:700; margin-top:2px;}
-  .day-weekday.sun{color:var(--red);} .day-weekday.sat{color:var(--uber);}
-  .day-info{min-width:0; flex:1;}
-  .day-meta{font-size:12.5px; color:var(--sub); font-weight:700;}
-  .day-block.is-today .day-meta{font-size:14px;}
-  .day-meta b{color:var(--ink); font-weight:800;}
-  .day-meta .alldone{color:var(--green); font-weight:800;}
-  .chevron{color:#b9cad6; font-size:13px; transition:transform .22s; flex-shrink:0;}
-  .day-block.open .chevron{transform:rotate(90deg);}
-  .day-progress-bar{height:6px; background:var(--line2); border-radius:99px;
-    margin-top:8px; overflow:hidden; max-width:190px;}
-  .day-progress-fill{height:100%; background:var(--green); border-radius:99px;
-    transition:width .3s;}
-  .today-chip{
-    display:inline-block; background:var(--accent); color:#fff;
-    font-size:10px; font-weight:900; letter-spacing:.1em;
-    padding:3px 10px; border-radius:999px; margin-bottom:6px;
-  }
-  .rest-tag{
-    background:var(--orange-soft); color:#c9762a; font-size:10.5px; font-weight:800;
-    padding:3px 8px; border-radius:7px; margin-right:5px;
-  }
-  .day-body{display:none; padding:4px 16px 18px; border-top:1px solid var(--line2);}
-  .day-block.open .day-body{display:block;}
-
-  /* ================= タスク ================= */
-  .section-label{
-    font-size:11px; letter-spacing:.06em; color:var(--sub); font-weight:800;
-    margin:16px 0 4px; display:flex; align-items:center; gap:7px;
-  }
-  .dot{width:9px; height:9px; border-radius:50%; display:inline-block;}
-  .dot.uber{background:var(--uber);} .dot.eigyou{background:var(--eigyou);}
-  .dot.daily{background:var(--daily);} .dot.other{background:var(--accent);}
-  .dot.nomigo{background:var(--nomigo);}
-
-  .task{
-    display:flex; align-items:center; gap:12px; padding:11px 4px;
-    border-bottom:1px solid var(--line2);
-  }
-  .task:last-child{border-bottom:none;}
-  .task input[type=checkbox]{
-    appearance:none; -webkit-appearance:none;
-    width:28px; height:28px; min-width:28px;
-    border:2px solid #c3d3de; border-radius:9px;
-    cursor:pointer; position:relative; background:#fff;
-    transition:background .15s, border-color .15s, transform .12s;
-  }
-  .task input[type=checkbox]:active{transform:scale(.9);}
-  .task input[type=checkbox]:checked{background:var(--green); border-color:var(--green);}
-  .task input[type=checkbox]:checked::after{
-    content:"✓"; position:absolute; top:50%; left:50%;
-    transform:translate(-50%,-56%); color:#fff; font-size:17px; font-weight:900;
-  }
-  .task label{font-size:15px; line-height:1.5; flex:1; cursor:pointer;
-    font-weight:600; min-width:0;}
-  .task.done label{color:var(--sub); text-decoration:line-through;
-    text-decoration-color:#c3d3de;}
-  .task .skip{
-    background:#fff; border:1.5px solid var(--line); color:var(--sub);
-    font-size:11.5px; font-weight:800; border-radius:9px; padding:7px 11px;
-    cursor:pointer; flex-shrink:0; white-space:nowrap;
-  }
-  .task .skip:active{transform:scale(.94);}
-  .task .skip.on{background:var(--orange-soft); border-color:var(--orange); color:#c9762a;}
-  .task.skipped label{color:#a9bccb; text-decoration:none;}
-  .task.skipped input[type=checkbox]{background:#eaf0f5; border-color:#d2dee7; opacity:.65;}
-  .skip-tag{
-    display:inline-block; background:var(--orange-soft); color:#c9762a;
-    font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:7px;
-    margin-right:6px; vertical-align:1px;
-  }
-  .task-time{
-    display:inline-block; background:var(--accent-soft); color:var(--accent-dark);
-    font-size:11px; font-weight:800; padding:2px 8px; border-radius:7px;
-    margin-right:7px; vertical-align:1px;
-  }
-  .task .del{
-    background:none; border:none; color:#cbd8e2; font-size:20px;
-    cursor:pointer; padding:0 3px; line-height:1; flex-shrink:0;
-  }
-
-  /* 記録入力 */
-  .record-row{margin:10px 0 4px;}
-  .record-row.two-col{display:flex; gap:10px;}
-  .record-row.two-col > div{flex:1;}
-  .record-label{font-size:12px; color:var(--sub); display:block;
-    margin-bottom:5px; font-weight:700;}
-  .record-input{
-    width:100%; background:var(--panel2); border:1.5px solid var(--line);
-    border-radius:var(--r-sm); padding:12px 12px; color:var(--ink);
-    font-size:16px; font-weight:700;
-  }
-  .record-hint{font-size:11.5px; color:var(--sub); margin-top:7px; font-weight:600;}
-
-  /* 追加フォーム */
-  .add-row{display:flex; gap:7px; margin-top:16px;}
-  .add-row input{
-    flex:1; min-width:0; background:var(--panel2); border:1.5px solid var(--line);
-    border-radius:var(--r-sm); padding:12px 12px; color:var(--ink); font-size:15px;
-  }
-  .add-row select{
+  .card{
     background:var(--panel2); border:1.5px solid var(--line);
-    border-radius:var(--r-sm); padding:12px 7px; color:var(--ink); font-size:13px;
-    font-weight:700;
+    border-left:5px solid var(--c); border-radius:11px;
+    padding:9px 8px; margin-bottom:6px; text-align:left; width:100%;
+    display:flex; flex-direction:column; gap:3px;
+    transition:transform .12s, background .18s, opacity .18s;
   }
-  .add-row button{
-    background:var(--accent); border:none; color:#fff; font-weight:800;
-    border-radius:var(--r-sm); padding:12px 18px; font-size:15px; cursor:pointer;
-    box-shadow:0 4px 12px rgba(47,143,214,.3);
+  .card:active{transform:scale(.95);}
+  .card .ct{font-size:12.5px; font-weight:800; line-height:1.4; color:var(--ink);}
+  .card .cm{font-size:10.5px; font-weight:800; color:var(--sub);}
+  .card.fin{background:var(--green-soft); border-color:#c4ecdd; opacity:.72;}
+  .card.fin .ct{text-decoration:line-through; color:var(--sub);}
+  .card.rest{background:var(--orange-soft); border-color:#f6d6ac;}
+  .card.rest .ct{color:#b8722c;}
+  .card-check{
+    align-self:flex-end; width:22px; height:22px; border-radius:7px;
+    border:2px solid #cbdae5; background:#fff; margin-top:2px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:900; color:transparent;
   }
-  .add-row button:active{transform:scale(.96);}
-  .time-row{display:flex; align-items:center; gap:8px; margin-top:8px;}
-  .time-lbl{font-size:12px; color:var(--sub); flex-shrink:0; font-weight:700;}
-  .time-in{
-    flex:1; min-width:0; background:var(--panel2); border:1.5px solid var(--line);
-    border-radius:var(--r-sm); padding:10px 10px; color:var(--ink); font-size:14px;
+  .card.fin .card-check{background:var(--green); border-color:var(--green); color:#fff;}
+  .card.rest .card-check{background:var(--orange); border-color:var(--orange); color:#fff;}
+  .col-empty{
+    text-align:center; color:#b5c6d3; font-size:11.5px; font-weight:800;
+    padding:18px 4px;
   }
-  .time-sep{font-size:13px; color:var(--sub);}
-  .repeat-row{margin-top:8px;}
-  .repeat-row select{
-    width:100%; background:var(--panel2); border:1.5px solid var(--line);
-    border-radius:var(--r-sm); padding:11px 12px; color:var(--ink2); font-size:13.5px;
-    font-weight:600;
+  .col-clear{
+    text-align:center; color:var(--green); font-size:12px; font-weight:900;
+    padding:14px 4px 10px;
+  }
+  .col-clear .em{display:block; font-size:26px; margin-bottom:3px;}
+
+  /* ========== 追加ボタン ========== */
+  .addbig{
+    position:fixed; left:50%; transform:translateX(-50%);
+    bottom:calc(76px + env(safe-area-inset-bottom));
+    background:linear-gradient(135deg,#2f8fd6,#4aa8e6); color:#fff;
+    border:none; border-radius:999px; padding:15px 30px;
+    font-size:16.5px; font-weight:900; z-index:45;
+    box-shadow:0 10px 26px rgba(47,143,214,.45);
+    display:flex; align-items:center; gap:8px; white-space:nowrap;
+  }
+  .addbig:active{transform:translateX(-50%) scale(.95);}
+
+  /* ========== 下部ナビ ========== */
+  .nav{
+    position:fixed; left:0; right:0; bottom:0; z-index:50;
+    background:rgba(255,255,255,.97); backdrop-filter:blur(10px);
+    border-top:1px solid var(--line); display:flex;
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .nav button{
+    flex:1; background:none; border:none; padding:7px 0 5px;
+    color:var(--sub); font-size:11px; font-weight:900;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+  }
+  .nav button i{font-size:21px; font-style:normal; line-height:1;}
+  .nav button.on{color:var(--accent);}
+
+  /* ========== 入力シート ========== */
+  .sheet{
+    position:fixed; inset:0; z-index:120; display:flex; align-items:flex-end;
+    background:rgba(15,35,55,0); transition:background .3s; pointer-events:none;
+  }
+  .sheet.show{background:rgba(15,35,55,.55); pointer-events:auto;}
+  .sheet-in{
+    width:100%; max-width:640px; margin:0 auto; background:var(--panel);
+    border-radius:26px 26px 0 0; padding:8px 18px calc(24px + env(safe-area-inset-bottom));
+    transform:translateY(100%); transition:transform .38s cubic-bezier(.2,1,.3,1);
+    max-height:92vh; overflow-y:auto;
+  }
+  .sheet.show .sheet-in{transform:translateY(0);}
+  .grip{width:44px; height:5px; border-radius:99px; background:#dbe6ee; margin:6px auto 14px;}
+  .sh-step{font-size:12px; font-weight:900; color:var(--accent); letter-spacing:.1em;}
+  .sh-q{font-size:20px; font-weight:900; margin:3px 0 14px;}
+
+  .pick-fam{display:flex; gap:10px; margin-bottom:6px;}
+  .pick-fam button{
+    flex:1; background:var(--panel2); border:2.5px solid var(--line);
+    border-radius:var(--r); padding:14px 6px 12px;
+    display:flex; flex-direction:column; align-items:center; gap:7px;
+  }
+  .pick-fam button img{width:56px; height:56px; border-radius:50%; object-fit:cover;
+    border:3px solid #fff; box-shadow:var(--sh);}
+  .pick-fam button span{font-size:15px; font-weight:900; color:var(--ink2);}
+  .pick-fam button:active{transform:scale(.96);}
+  .pick-fam button.on{background:var(--accent-soft); border-color:var(--accent);}
+  .pick-fam button.on span{color:var(--accent-dark);}
+
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+  .chip{
+    background:var(--panel2); border:2px solid var(--line); border-radius:999px;
+    padding:11px 16px; font-size:14.5px; font-weight:800; color:var(--ink2);
+  }
+  .chip:active{transform:scale(.95);}
+  .chip.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .chip.big{font-size:15.5px; padding:13px 20px;}
+
+  .sh-input{
+    width:100%; background:var(--panel2); border:2px solid var(--line);
+    border-radius:14px; padding:15px 15px; font-size:17px; font-weight:700;
+    color:var(--ink); margin-bottom:14px;
+  }
+  .sh-row{display:flex; gap:10px; align-items:center; margin-bottom:14px;}
+  .sh-row .sh-input{margin:0;}
+  .sh-lbl{font-size:13px; font-weight:900; color:var(--sub); margin:0 0 8px;}
+  .sh-btn{
+    width:100%; background:linear-gradient(135deg,#2f8fd6,#4aa8e6); color:#fff;
+    border:none; border-radius:16px; padding:17px; font-size:17px; font-weight:900;
+    box-shadow:0 8px 22px rgba(47,143,214,.4); margin-top:4px;
+  }
+  .sh-btn:active{transform:scale(.97);}
+  .sh-btn.sub{background:none; color:var(--sub); box-shadow:none; font-size:14.5px;
+    padding:13px; margin-top:2px;}
+  .sh-back{
+    background:none; border:none; color:var(--sub); font-size:14px; font-weight:800;
+    padding:6px 0 12px;
   }
 
-  /* ラーメンバイト */
-  .ramen-row{
-    display:flex; align-items:center; gap:12px; cursor:pointer;
-    background:var(--panel2); border:1.5px solid var(--line);
-    border-radius:var(--r-md); padding:13px 14px; margin:14px 0 4px;
-    transition:background .2s, border-color .2s;
+  /* ========== 詳細シート（タスクを押した時） ========== */
+  .det-t{font-size:21px; font-weight:900; margin:2px 0 3px; line-height:1.35;}
+  .det-s{font-size:13px; color:var(--sub); font-weight:800; margin-bottom:18px;}
+  .det-btns{display:flex; flex-direction:column; gap:9px;}
+  .det-b{
+    border:none; border-radius:16px; padding:17px; font-size:16.5px; font-weight:900;
+    display:flex; align-items:center; justify-content:center; gap:9px;
   }
-  .ramen-row.on{background:var(--orange-soft); border-color:var(--orange);}
-  .ramen-ico{font-size:22px; flex-shrink:0;}
-  .ramen-txt{flex:1; min-width:0;}
-  .ramen-t{font-size:13.5px; font-weight:800;}
-  .ramen-row.on .ramen-t{color:#c9762a;}
-  .ramen-s{font-size:11px; color:var(--sub); margin-top:2px; font-weight:600;}
-  .ramen-sw{width:50px; height:29px; border-radius:999px; background:#cdd9e2;
-    flex-shrink:0; position:relative; transition:background .22s;}
-  .ramen-sw.on{background:var(--orange);}
-  .ramen-sw span{
-    position:absolute; top:3px; left:3px; width:23px; height:23px;
-    border-radius:50%; background:#fff; transition:transform .22s;
-    box-shadow:0 2px 5px rgba(0,0,0,.2);
-  }
-  .ramen-sw.on span{transform:translateX(21px);}
+  .det-b.done{background:var(--green); color:#fff; box-shadow:0 8px 20px rgba(46,180,137,.35);}
+  .det-b.undone{background:var(--panel2); color:var(--ink2); border:2px solid var(--line);}
+  .det-b.rest{background:var(--orange-soft); color:#b8722c; border:2px solid #f6d6ac;}
+  .det-b.del{background:none; color:var(--red); font-size:14.5px; padding:12px;}
+  .det-b:active{transform:scale(.97);}
 
-  /* ================= カレンダー ================= */
-  .cal-wrap{
-    background:var(--panel); border:1px solid var(--line);
-    border-radius:var(--r-lg); padding:14px 10px; margin-bottom:14px;
-    box-shadow:var(--sh);
-  }
-  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px; align-items:start;}
-  .cal-head{font-size:11px; color:var(--sub); text-align:center;
-    padding:4px 0 7px; font-weight:800;}
-  .cal-head.sun{color:var(--red);} .cal-head.sat{color:var(--uber);}
+  /* ========== カレンダー ========== */
+  .cal-wrap{background:var(--panel); border:1px solid var(--line);
+    border-radius:var(--r); padding:14px 9px; margin-top:14px; box-shadow:var(--sh);}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; align-items:start;}
+  .cal-head{font-size:11px; color:var(--sub); text-align:center; padding:3px 0 6px; font-weight:900;}
+  .cal-head.sun{color:var(--red);} .cal-head.sat{color:var(--accent);}
   .cal-cell{
-    min-height:86px; height:auto; background:var(--panel2);
-    border:2px solid transparent; border-radius:var(--r-sm); padding:6px 4px 5px;
-    cursor:pointer; display:flex; flex-direction:column; gap:4px; overflow:hidden;
-    transition:background .18s, border-color .18s;
+    min-height:76px; background:var(--panel2); border:2px solid transparent;
+    border-radius:11px; padding:5px 3px; display:flex; flex-direction:column; gap:3px;
+    overflow:hidden;
   }
-  .cal-cell.empty{background:transparent; cursor:default; min-height:0; border:none;}
+  .cal-cell.empty{background:transparent; min-height:0; border:none;}
   .cal-cell.today{border-color:var(--accent); background:#e9f4fd;}
-  .cal-cell.sel{background:var(--accent-soft); border-color:var(--accent-dark);}
+  .cal-cell.sel{border-color:var(--accent-dark); background:var(--accent-soft);}
   .cal-cell.cleared{background:var(--green-soft);}
-  .cell-top{display:flex; align-items:center; justify-content:space-between; gap:2px;}
-  .cal-cell .cd{font-size:13.5px; font-weight:900; color:var(--ink2);}
+  .cell-top{display:flex; align-items:center; justify-content:space-between;}
+  .cal-cell .cd{font-size:13px; font-weight:900; color:var(--ink2);}
   .cal-cell.today .cd{color:var(--accent);}
-  .cell-dots{display:flex; gap:4px;}
-  .md{display:flex; align-items:center; gap:2px;}
-  .md i{width:6px; height:6px; border-radius:50%; display:inline-block;}
-  .md b{font-size:9.5px; font-weight:900; color:var(--ink2);}
+  .cell-dots{display:flex; gap:3px;}
+  .md{display:flex; align-items:center; gap:1px;}
+  .md i{width:6px; height:6px; border-radius:50%;}
+  .md b{font-size:9px; font-weight:900; color:var(--ink2);}
   .md b.ok{color:var(--green);} .md b.off{color:#c6d5e0;}
   .ev-list{display:flex; flex-direction:column; gap:3px; overflow:hidden;}
   .ev-chip{
-    display:flex; align-items:center; gap:4px;
-    background:#fff; border-radius:6px; padding:3px 4px 3px 5px;
-    border-left:3.5px solid var(--c);
-    font-size:9.5px; line-height:1.35; color:var(--ink2); font-weight:700;
-    white-space:nowrap; overflow:hidden;
-    box-shadow:0 1px 3px rgba(22,60,95,.07);
+    background:#fff; border-radius:6px; padding:2px 4px 2px 5px;
+    border-left:3.5px solid var(--c); font-size:9.5px; line-height:1.35;
+    color:var(--ink2); font-weight:800; white-space:nowrap; overflow:hidden;
+    text-overflow:ellipsis; box-shadow:0 1px 3px rgba(20,60,95,.07);
   }
-  .ev-chip span{overflow:hidden; text-overflow:ellipsis;}
-  .ev-chip.done{opacity:.42; text-decoration:line-through; box-shadow:none;}
-  .ev-more{
-    font-size:9px; color:var(--accent); padding:3px 4px; font-weight:800;
-    cursor:pointer; background:var(--accent-soft); border-radius:6px;
-    text-align:center;
-  }
+  .ev-chip.done{opacity:.4; text-decoration:line-through; box-shadow:none;}
+  .ev-more{font-size:9px; color:var(--accent); padding:2px; font-weight:900;
+    background:var(--accent-soft); border-radius:6px; text-align:center;}
   .cal-legend{display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
-    margin-top:13px; font-size:11px; color:var(--sub); font-weight:700;}
+    margin-top:12px; font-size:11px; color:var(--sub); font-weight:800;}
   .cal-legend span{display:flex; align-items:center; gap:5px;}
   .legend-face{width:19px; height:19px; border-radius:50%; object-fit:cover;
     border:2px solid var(--line);}
-  .cal-detail{
-    background:var(--panel); border:1px solid var(--line);
-    border-radius:var(--r-lg); padding:18px; box-shadow:var(--sh);
-  }
-  .cal-detail-title{font-size:17px; font-weight:900; margin:0 0 4px;}
-  .cal-detail-sub{font-size:12.5px; color:var(--sub); margin-bottom:10px; font-weight:700;}
 
-  /* みんな表示 */
-  .all-block{margin-top:14px; padding-top:13px; border-top:1px solid var(--line2);}
-  .all-block:first-child{border-top:none; padding-top:2px;}
-  .all-head{display:flex; align-items:center; gap:9px; margin-bottom:4px;}
-  .all-face{width:30px; height:30px; border-radius:50%; object-fit:cover;
-    border:2.5px solid var(--line);}
-  .all-name{font-size:14px; font-weight:800;}
-  .all-count{margin-left:auto; font-size:11.5px; font-weight:800;
-    background:var(--panel2); color:var(--sub); padding:3px 10px; border-radius:999px;}
-  .all-count.ok{background:var(--green-soft); color:var(--green);}
-  .all-empty{font-size:12.5px; color:var(--sub); padding:6px 2px; font-weight:600;}
-
-  /* ================= 可視化 ================= */
-  .viz-section{
-    background:var(--panel); border:1px solid var(--line);
-    border-radius:var(--r-lg); padding:18px; margin-bottom:14px; box-shadow:var(--sh);
-  }
-  .viz-title{font-size:15px; font-weight:900; margin:0 0 15px;}
-  .viz-sub{font-size:11.5px; color:var(--sub); font-weight:600; margin-left:7px;}
+  /* ========== じぶん（数字） ========== */
+  .mine-sec{background:var(--panel); border:1px solid var(--line);
+    border-radius:var(--r); padding:17px; margin-top:14px; box-shadow:var(--sh);}
+  .mine-ttl{font-size:15px; font-weight:900; margin:0 0 14px;
+    display:flex; align-items:center; gap:7px;}
+  .mine-ttl small{font-size:11.5px; color:var(--sub); font-weight:700; margin-left:auto;}
+  .pace-box{background:linear-gradient(135deg,#eaf4fd,#f4faff); border:1px solid #d5e8f7;
+    border-radius:var(--r2); padding:14px 15px; margin-bottom:12px;}
+  .pace-msg{font-size:13px; font-weight:800; color:var(--ink2);}
+  .pace-msg b{font-size:19px; font-weight:900; color:var(--accent-dark);}
+  .pace-bar{height:8px; background:#d9e9f6; border-radius:99px; margin-top:10px; overflow:hidden;}
+  .pace-fill{height:100%; background:linear-gradient(90deg,var(--accent),#68bdf0);
+    border-radius:99px; transition:width .35s;}
+  .goal-strip{display:flex; gap:9px;}
+  .goal-card{flex:1; min-width:0; background:var(--panel2); border:1px solid var(--line);
+    border-radius:var(--r2); padding:12px 11px;}
+  .goal-card .label{font-size:10.5px; color:var(--sub); font-weight:800;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .goal-card .value{font-size:17px; font-weight:900; margin-top:4px;}
+  .goal-card.uber .value{color:var(--accent);}
+  .goal-card.eigyou .value{color:var(--c-sis);}
+  .goal-card.total .value{color:var(--green);}
+  .goal-card .sub{font-size:10.5px; color:var(--sub); margin-top:3px; font-weight:700;}
+  .goal-card .sub.remain{color:var(--red); font-weight:900;}
+  .goal-card .sub.remain.achieved{color:var(--green);}
+  .goal-card .sub.pace{color:var(--accent); font-weight:900; margin-top:5px;
+    background:#fff; border-radius:7px; padding:3px 7px; display:inline-block;}
+  .rec-row{margin-top:12px;}
+  .rec-row.two{display:flex; gap:10px;}
+  .rec-row.two > div{flex:1;}
+  .rec-lbl{font-size:12.5px; color:var(--sub); font-weight:800; display:block; margin-bottom:6px;}
+  .rec-in{width:100%; background:var(--panel2); border:2px solid var(--line);
+    border-radius:12px; padding:13px; font-size:17px; font-weight:800; color:var(--ink);}
+  .rec-hint{font-size:12px; color:var(--sub); margin-top:8px; font-weight:700;}
+  .ramen-row{display:flex; align-items:center; gap:12px; background:var(--panel2);
+    border:2px solid var(--line); border-radius:var(--r2); padding:14px; margin-top:12px;}
+  .ramen-row.on{background:var(--orange-soft); border-color:var(--orange);}
+  .ramen-ico{font-size:24px;}
+  .ramen-txt{flex:1;}
+  .ramen-t{font-size:14px; font-weight:900;}
+  .ramen-row.on .ramen-t{color:#c9762a;}
+  .ramen-s{font-size:11.5px; color:var(--sub); font-weight:700; margin-top:2px;}
+  .ramen-sw{width:52px; height:30px; border-radius:99px; background:#cdd9e2; position:relative;}
+  .ramen-sw.on{background:var(--orange);}
+  .ramen-sw span{position:absolute; top:3px; left:3px; width:24px; height:24px;
+    border-radius:50%; background:#fff; transition:transform .22s;
+    box-shadow:0 2px 5px rgba(0,0,0,.2);}
+  .ramen-sw.on span{transform:translateX(22px);}
   .member-row{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
   .member-face{width:32px; height:32px; border-radius:50%; object-fit:cover;
-    border:2.5px solid var(--line); flex-shrink:0;}
-  .member-name{font-size:13px; width:52px; flex-shrink:0; font-weight:800;}
-  .member-bar-wrap{flex:1; height:22px; background:var(--line2);
-    border-radius:99px; overflow:hidden;}
+    border:2.5px solid var(--line);}
+  .member-name{font-size:13px; width:56px; font-weight:900;}
+  .member-bar-wrap{flex:1; height:22px; background:var(--line2); border-radius:99px; overflow:hidden;}
   .member-bar{height:100%; border-radius:99px; transition:width .3s;}
-  .member-val{font-size:12px; width:90px; text-align:right; flex-shrink:0; font-weight:800;}
-  .bar-chart{display:flex; align-items:flex-end; gap:2px; height:120px; padding-top:8px;}
-  .bar-col{flex:1; min-width:0; display:flex; flex-direction:column;
-    justify-content:flex-end; align-items:center; height:100%;}
+  .member-val{font-size:12px; width:88px; text-align:right; font-weight:900;}
+  .bar-chart{display:flex; align-items:flex-end; gap:2px; height:110px; padding-top:8px;}
+  .bar-col{flex:1; display:flex; flex-direction:column; justify-content:flex-end;
+    align-items:center; height:100%;}
   .bar{width:100%; border-radius:3px 3px 0 0; min-height:2px;}
   .bar-label{font-size:7.5px; color:var(--sub); margin-top:4px; font-weight:700;}
   .stat-grid{display:flex; gap:10px; flex-wrap:wrap;}
-  .stat{flex:1 1 44%; background:var(--panel2); border-radius:var(--r-md);
-    padding:13px 14px;}
-  .stat .l{font-size:11px; color:var(--sub); font-weight:700;}
-  .stat .v{font-size:20px; font-weight:900; margin-top:4px; letter-spacing:-.02em;}
+  .stat{flex:1 1 44%; background:var(--panel2); border-radius:var(--r2); padding:13px;}
+  .stat .l{font-size:11px; color:var(--sub); font-weight:800;}
+  .stat .v{font-size:20px; font-weight:900; margin-top:4px;}
 
-  .status{text-align:center; color:var(--sub); font-size:13px; padding:36px;
-    font-weight:700;}
-  .footer-note{text-align:center; color:var(--sub); font-size:12px;
-    margin-top:22px; line-height:1.8; font-weight:600;}
+  .status{text-align:center; color:var(--sub); font-size:13.5px; padding:44px; font-weight:800;}
+  .foot{text-align:center; color:var(--sub); font-size:12px; margin:22px 0; font-weight:700;}
+  .mon-nav{display:flex; align-items:center; justify-content:center; gap:8px;
+    margin-top:14px;}
+  .mon-nav button{background:var(--panel); border:1px solid var(--line); color:var(--accent);
+    width:38px; height:38px; border-radius:50%; font-size:19px; font-weight:900;
+    box-shadow:var(--sh);}
+  .mon-nav select{background:var(--panel); border:1px solid var(--line);
+    border-radius:999px; padding:9px 16px; font-size:15px; font-weight:900;
+    color:var(--ink); box-shadow:var(--sh); -webkit-appearance:none; appearance:none;}
 
-  /* ================= ポップアップ ================= */
-  .pop{
-    position:fixed; inset:0; z-index:200; display:flex;
-    align-items:center; justify-content:center; padding:14px;
-    background:rgba(16,34,52,0); backdrop-filter:blur(0px);
-    transition:background .38s, backdrop-filter .38s; pointer-events:none;
-  }
+  /* ポップアップ・おみくじ（既存） */
+  .pop{position:fixed; inset:0; z-index:200; display:flex; align-items:center;
+    justify-content:center; padding:14px; background:rgba(16,34,52,0);
+    backdrop-filter:blur(0); transition:background .38s, backdrop-filter .38s;
+    pointer-events:none;}
   .pop.show{background:rgba(16,34,52,.68); backdrop-filter:blur(7px);}
-  .pop-card{
-    position:relative; width:100%; max-width:520px;
-    background:#fff; border-radius:26px; overflow:hidden;
-    box-shadow:0 30px 80px rgba(10,30,50,.5);
+  .pop-card{position:relative; width:100%; max-width:520px; background:#fff;
+    border-radius:26px; overflow:hidden; box-shadow:0 30px 80px rgba(10,30,50,.5);
     transform:translateY(46px) scale(.84) rotate(-2.5deg); opacity:0;
-    transition:transform .55s cubic-bezier(.16,1.34,.36,1), opacity .34s;
-  }
+    transition:transform .55s cubic-bezier(.16,1.34,.36,1), opacity .34s;}
   .pop.show .pop-card{transform:translateY(0) scale(1) rotate(0); opacity:1;}
-  .pop-photo{
-    width:100%; max-height:66vh; aspect-ratio:1/1; object-fit:cover; display:block;
-    animation:kenburns 7s ease-out forwards;
-  }
-  @keyframes kenburns{ from{transform:scale(1.12);} to{transform:scale(1);} }
-  .pop-body{
-    position:absolute; left:0; right:0; bottom:0; padding:56px 22px 24px;
-    background:linear-gradient(180deg, transparent, rgba(8,22,36,.62) 40%, rgba(8,22,36,.93));
-    text-align:center; color:#fff;
-  }
-  .pop-title{
-    font-size:24px; font-weight:900; letter-spacing:.02em; margin-bottom:7px;
-    text-shadow:0 3px 16px rgba(0,0,0,.75);
-    opacity:0; transform:translateY(16px) scale(.94);
-    animation:riseIn .55s .24s cubic-bezier(.2,1.4,.4,1) forwards;
-  }
-  .pop-sub{
-    font-size:13.5px; color:#e4edf3; line-height:1.65; font-weight:600;
-    text-shadow:0 1px 10px rgba(0,0,0,.8);
-    opacity:0; transform:translateY(14px);
-    animation:riseIn .5s .4s forwards;
-  }
-  @keyframes riseIn{ to{opacity:1; transform:translateY(0) scale(1);} }
-  .pop-badge{
-    position:absolute; top:15px; left:15px;
-    background:rgba(255,255,255,.94); color:var(--ink);
-    border-radius:999px; padding:7px 15px;
-    font-size:12px; font-weight:900; letter-spacing:.04em;
-    box-shadow:0 4px 14px rgba(0,0,0,.25);
-    opacity:0; transform:scale(.6);
-    animation:popIn .5s .12s cubic-bezier(.2,1.6,.4,1) forwards;
-  }
-  @keyframes popIn{ to{opacity:1; transform:scale(1);} }
-  .pop-tap{
-    position:absolute; bottom:9px; left:0; right:0; text-align:center;
-    font-size:10.5px; color:rgba(255,255,255,.55); font-weight:600;
-  }
-  .pop-bar{
-    position:absolute; top:0; left:0; height:5px; width:0; z-index:2;
-    background:linear-gradient(90deg,#2f8fd6,#7fd0f5);
-  }
+  .pop-photo{width:100%; max-height:64vh; aspect-ratio:1/1; object-fit:cover; display:block;
+    animation:kb 7s ease-out forwards;}
+  @keyframes kb{from{transform:scale(1.12);} to{transform:scale(1);}}
+  .pop-body{position:absolute; left:0; right:0; bottom:0; padding:56px 22px 24px;
+    background:linear-gradient(180deg,transparent,rgba(8,22,36,.62) 40%,rgba(8,22,36,.93));
+    text-align:center; color:#fff;}
+  .pop-title{font-size:24px; font-weight:900; margin-bottom:7px;
+    text-shadow:0 3px 16px rgba(0,0,0,.75); opacity:0;
+    transform:translateY(16px) scale(.94);
+    animation:ri .55s .24s cubic-bezier(.2,1.4,.4,1) forwards;}
+  .pop-sub{font-size:13.5px; color:#e4edf3; line-height:1.65; font-weight:700;
+    text-shadow:0 1px 10px rgba(0,0,0,.8); opacity:0; transform:translateY(14px);
+    animation:ri .5s .4s forwards;}
+  @keyframes ri{to{opacity:1; transform:translateY(0) scale(1);}}
+  .pop-badge{position:absolute; top:15px; left:15px; background:rgba(255,255,255,.94);
+    color:var(--ink); border-radius:999px; padding:7px 15px; font-size:12px;
+    font-weight:900; box-shadow:0 4px 14px rgba(0,0,0,.25); opacity:0;
+    transform:scale(.6); animation:pi .5s .12s cubic-bezier(.2,1.6,.4,1) forwards;}
+  @keyframes pi{to{opacity:1; transform:scale(1);}}
+  .pop-tap{position:absolute; bottom:9px; left:0; right:0; text-align:center;
+    font-size:10.5px; color:rgba(255,255,255,.55); font-weight:700;}
+  .pop-bar{position:absolute; top:0; left:0; height:5px; width:0; z-index:2;
+    background:linear-gradient(90deg,#2f8fd6,#7fd0f5);}
   .pop-card.full .pop-bar{background:linear-gradient(90deg,#f0a83c,#ffd98a);}
-  .pop.show .pop-bar{ animation:barGo 4.4s linear forwards; }
-  @keyframes barGo{ from{width:0;} to{width:100%;} }
-  .conf{position:fixed; width:9px; height:14px; top:-24px; opacity:.95;
-    z-index:201; animation:fall linear forwards;}
-  @keyframes fall{ to{ transform:translateY(118vh) rotate(780deg); opacity:0; } }
+  .pop.show .pop-bar{animation:bg 4.4s linear forwards;}
+  @keyframes bg{from{width:0;} to{width:100%;}}
+  .conf{position:fixed; width:9px; height:14px; top:-24px; opacity:.95; z-index:201;
+    animation:fl linear forwards;}
+  @keyframes fl{to{transform:translateY(118vh) rotate(780deg); opacity:0;}}
 
-  /* ================= おみくじ ================= */
-  .omi{
-    position:fixed; inset:0; z-index:300; display:flex;
-    align-items:center; justify-content:center; padding:16px;
-    background:rgba(20,40,60,0); backdrop-filter:blur(0);
-    transition:background .4s, backdrop-filter .4s;
-  }
+  .omi{position:fixed; inset:0; z-index:300; display:flex; align-items:center;
+    justify-content:center; padding:16px; background:rgba(20,40,60,0);
+    backdrop-filter:blur(0); transition:background .4s, backdrop-filter .4s;}
   .omi.show{background:rgba(20,40,60,.7); backdrop-filter:blur(8px);}
-  .omi-card{
-    width:100%; max-width:360px; border-radius:26px; overflow:hidden;
+  .omi-card{width:100%; max-width:360px; border-radius:26px; overflow:hidden;
     background:linear-gradient(170deg,#fffdf7,#fff6ec 45%,#ffeede);
-    box-shadow:0 26px 70px rgba(10,30,50,.45);
-    transform:translateY(40px) scale(.86); opacity:0;
-    transition:transform .5s cubic-bezier(.16,1.32,.36,1), opacity .32s;
-    position:relative;
-  }
+    box-shadow:0 26px 70px rgba(10,30,50,.45); transform:translateY(40px) scale(.86);
+    opacity:0; transition:transform .5s cubic-bezier(.16,1.32,.36,1), opacity .32s;}
   .omi.show .omi-card{transform:translateY(0) scale(1); opacity:1;}
-  .omi-top{
-    background:linear-gradient(135deg,#ff9db0,#ffb37a);
-    padding:16px 18px 14px; text-align:center; color:#fff; position:relative;
-  }
-  .omi-top::after{
-    content:""; position:absolute; left:0; right:0; bottom:-1px; height:14px;
+  .omi-top{background:linear-gradient(135deg,#ff9db0,#ffb37a); padding:16px 18px 14px;
+    text-align:center; color:#fff; position:relative;}
+  .omi-top::after{content:""; position:absolute; left:0; right:0; bottom:-1px; height:14px;
     background:radial-gradient(circle at 10px -2px, transparent 9px, #fffdf7 10px);
-    background-size:20px 14px;
-  }
+    background-size:20px 14px;}
   .omi-ttl{font-size:15px; font-weight:900; letter-spacing:.16em;}
-  .omi-date{font-size:10.5px; opacity:.92; margin-top:2px; letter-spacing:.05em;
-    font-weight:700;}
-  .omi-draw{padding:30px 20px 30px; text-align:center;}
-  .omi-box{
-    width:104px; height:132px; margin:0 auto 16px; position:relative;
-    background:linear-gradient(160deg,#ff8fa6,#ff7089);
-    border-radius:14px; box-shadow:0 10px 24px rgba(255,120,145,.4);
-    animation:wobble 1.5s ease-in-out infinite;
-    display:flex; align-items:center; justify-content:center;
-  }
-  @keyframes wobble{
-    0%,100%{transform:rotate(-4deg) translateY(0);}
-    50%{transform:rotate(4deg) translateY(-6px);}
-  }
+  .omi-date{font-size:10.5px; opacity:.92; margin-top:2px; font-weight:700;}
+  .omi-draw{padding:30px 20px; text-align:center;}
+  .omi-box{width:104px; height:132px; margin:0 auto 16px; position:relative;
+    background:linear-gradient(160deg,#ff8fa6,#ff7089); border-radius:14px;
+    box-shadow:0 10px 24px rgba(255,120,145,.4); animation:wb 1.5s ease-in-out infinite;
+    display:flex; align-items:center; justify-content:center;}
+  @keyframes wb{0%,100%{transform:rotate(-4deg) translateY(0);}
+    50%{transform:rotate(4deg) translateY(-6px);}}
   .omi-box span{font-size:38px;}
-  .omi-box::before{
-    content:""; position:absolute; top:-9px; left:50%; transform:translateX(-50%);
-    width:34px; height:12px; background:#f2d38a; border-radius:5px;
-  }
-  .omi-lead{font-size:14px; color:#8a6a52; margin-bottom:15px; line-height:1.6;
-    font-weight:700;}
-  .omi-btn{
-    background:linear-gradient(135deg,#ff8fa6,#ffa579); border:none; color:#fff;
+  .omi-box::before{content:""; position:absolute; top:-9px; left:50%;
+    transform:translateX(-50%); width:34px; height:12px; background:#f2d38a;
+    border-radius:5px;}
+  .omi-lead{font-size:14px; color:#8a6a52; margin-bottom:15px; font-weight:800;}
+  .omi-btn{background:linear-gradient(135deg,#ff8fa6,#ffa579); border:none; color:#fff;
     font-size:16px; font-weight:900; padding:14px 40px; border-radius:999px;
-    box-shadow:0 8px 20px rgba(255,130,150,.45); cursor:pointer; letter-spacing:.06em;
-  }
-  .omi-btn:active{transform:scale(.96);}
-  .omi-res{padding:20px 20px 18px; text-align:center;}
-  .omi-luck{
-    font-size:44px; font-weight:900; letter-spacing:.1em; line-height:1.1;
-    background:linear-gradient(135deg,#f2913f,#e2607b);
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-    opacity:0; transform:scale(.5);
-    animation:luckIn .6s .05s cubic-bezier(.2,1.6,.4,1) forwards;
-  }
-  @keyframes luckIn{to{opacity:1; transform:scale(1);}}
-  .omi-word{
-    font-size:12.5px; color:#8a6a52; margin:7px 0 15px; line-height:1.6;
-    font-weight:700; opacity:0; animation:fadeUp .5s .3s forwards;
-  }
-  @keyframes fadeUp{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+    box-shadow:0 8px 20px rgba(255,130,150,.45);}
+  .omi-res{padding:20px; text-align:center;}
+  .omi-luck{font-size:44px; font-weight:900; letter-spacing:.1em;
+    background:linear-gradient(135deg,#f2913f,#e2607b); -webkit-background-clip:text;
+    background-clip:text; color:transparent; opacity:0; transform:scale(.5);
+    animation:li .6s .05s cubic-bezier(.2,1.6,.4,1) forwards;}
+  @keyframes li{to{opacity:1; transform:scale(1);}}
+  .omi-word{font-size:12.5px; color:#8a6a52; margin:7px 0 15px; font-weight:800;
+    opacity:0; animation:fu .5s .3s forwards;}
+  @keyframes fu{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
   .omi-rows{display:flex; flex-direction:column; gap:9px; margin-bottom:14px;}
-  .omi-row{
-    display:flex; align-items:center; gap:9px;
-    background:rgba(255,255,255,.78); border-radius:12px; padding:10px 13px;
-    opacity:0; animation:fadeUp .45s forwards;
-  }
+  .omi-row{display:flex; align-items:center; gap:9px; background:rgba(255,255,255,.78);
+    border-radius:12px; padding:10px 13px; opacity:0; animation:fu .45s forwards;}
   .omi-row:nth-child(1){animation-delay:.4s;}
   .omi-row:nth-child(2){animation-delay:.5s;}
   .omi-row:nth-child(3){animation-delay:.6s;}
   .omi-ico{font-size:18px;}
-  .omi-lbl{font-size:13px; color:#7c6250; font-weight:800; width:56px; text-align:left;}
-  .omi-stars{margin-left:auto; font-size:15px; letter-spacing:1px;}
-  .omi-star-on{color:#f5a623;}
-  .omi-star-off{color:#e5d9cc;}
-  .omi-item{
-    background:linear-gradient(135deg,#fff3e2,#ffe9f0);
-    border:1.5px dashed #f0b39a; border-radius:14px; padding:13px;
-    opacity:0; animation:fadeUp .5s .72s forwards;
-  }
-  .omi-item-l{font-size:10.5px; color:#b08a72; letter-spacing:.1em; font-weight:800;}
+  .omi-lbl{font-size:13px; color:#7c6250; font-weight:900; width:56px; text-align:left;}
+  .omi-stars{margin-left:auto; font-size:15px;}
+  .omi-star-on{color:#f5a623;} .omi-star-off{color:#e5d9cc;}
+  .omi-item{background:linear-gradient(135deg,#fff3e2,#ffe9f0); border:1.5px dashed #f0b39a;
+    border-radius:14px; padding:13px; opacity:0; animation:fu .5s .72s forwards;}
+  .omi-item-l{font-size:10.5px; color:#b08a72; letter-spacing:.1em; font-weight:900;}
   .omi-item-v{font-size:18px; font-weight:900; color:#d2683f; margin-top:4px;}
-  .omi-close{
-    display:block; width:100%; margin-top:14px; background:none; border:none;
-    color:#a9927f; font-size:13px; cursor:pointer; padding:8px; font-weight:700;
-    opacity:0; animation:fadeUp .5s .85s forwards;
-  }
+  .omi-close{display:block; width:100%; margin-top:14px; background:none; border:none;
+    color:#a9927f; font-size:13px; padding:8px; font-weight:800; opacity:0;
+    animation:fu .5s .85s forwards;}
 
-  @media (min-width:560px){
-    .cal-cell{min-height:104px;}
-    .ev-chip{font-size:11px;}
-    h1{font-size:26px;}
+  @media (max-width:359px){
+    .col-head img{width:38px; height:38px;}
+    .card .ct{font-size:11.5px;}
   }
 </style>
 </head>
 <body>
 
-<div class="banner"><img id="bannerImg" alt=""></div>
+<div class="topbar"><div class="wrap">
+  <div class="top-in">
+    <div class="today-str" id="todayStr"></div>
+    <div class="top-fam" id="topFam"></div>
+  </div>
+  <div class="daysw" id="daySw"></div>
+</div></div>
 
-<div class="head-inner">
-  <div class="title-row">
-    <div class="brand">
-        <h1>今日<span class="accent">やること</span></h1>
-        <div class="brand-sub">FAMILY DAILY</div>
-      </div>
-    <div class="month-nav">
-      <button onclick="changeMonth(-1)">‹</button>
-      <select id="monthSelect" onchange="jumpMonth(this.value)"></select>
-      <button onclick="changeMonth(1)">›</button>
-    </div>
-  </div>
-  <div class="member-tabs" id="memberTabs"></div>
-  <div class="view-tabs">
-    <button class="view-tab active" data-view="list" onclick="switchView('list')"><span class="vi">☑︎</span>リスト</button>
-    <button class="view-tab" data-view="cal" onclick="switchView('cal')"><span class="vi">▦</span>カレンダー</button>
-    <button class="view-tab" data-view="viz" onclick="switchView('viz')"><span class="vi">◔</span>可視化</button>
-  </div>
+<div class="wrap" id="app"><div class="status">よみこみ中…</div></div>
+
+<button class="addbig" id="addBig" onclick="openAdd()">＋ よてい を いれる</button>
+
+<div class="nav">
+  <button class="on" data-v="board" onclick="go('board')"><i>🏠</i>きょう</button>
+  <button data-v="cal" onclick="go('cal')"><i>📅</i>カレンダー</button>
+  <button data-v="mine" onclick="go('mine')"><i>📊</i>じぶん</button>
 </div>
 
-<main id="app"><div class="status">読み込み中...</div></main>
-
-<div class="footer-note">
-  家族全員のデータが自動で共有されます。
-</div>
+<div class="sheet" id="sheet"><div class="sheet-in" id="sheetIn"></div></div>
 
 <script>
 const IMG = {
@@ -684,39 +478,28 @@ const IMG = {
 
 const CATS = Array.from({length:12}, (_,i)=>`photos/cat${i}.jpg`);
 const FAMS = Array.from({length:7},  (_,i)=>`photos/fam${i}.jpg`);
-// 事前読み込み（初回の待ちをなくす）
 window.addEventListener("load", ()=>{
   [...CATS, ...FAMS].forEach(src=>{ const i=new Image(); i.src=src; });
 });
+
 const SUPABASE_URL = "https://imocbgongkbdcnpcorgu.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imltb2NiZ29uZ2tiZGNucGNvcmd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMjYyODIsImV4cCI6MjEwMDcwMjI4Mn0.7n2Exeju8DoXbkHrL6gCly12G51570gaOQNPRvH9wts";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// 金額目標があるのは享祐のみ
+/* ===== 設定 ===== */
 const GOALS = { kyosuke:{ uber:150000, eigyou:100000 } };
-const EIGYOU_SELF_YEN = 8000;
-const EIGYOU_TEAM_YEN = 3000;
+const EIGYOU_SELF_YEN = 8000, EIGYOU_TEAM_YEN = 3000;
 const hasMoney = id => !!GOALS[id];
-const isAll = () => currentMember === "all";
-// 完了扱い（チェック済み or 今日はやらない）
 const isDone = t => !!(t.done || t.skipped);
-// その日の「予定」＝定型以外のタスク
-function eventsOf(memberId, d, ds){
-  return tasksFor(memberId, d, ds).filter(t=>!isRoutine(t)).sort(sortByTime);
-}
-function isRoutine(t){
-  return t.member_id === "kyosuke" && (t.sort_order||0) < 900 && ROUTINE.has(t.text);
-}
+const CALL = { kyosuke:"享祐", sister:"りお", mother:"お母さん" };
+const COLCLS = { kyosuke:"me", mother:"mom", sister:"sis" };
+const callOf = id => CALL[id] || (members.find(m=>m.id===id)||{}).name || "";
 
 const CAT_META = {
-  daily:  {label:"日常", dot:"daily"},
-  nomigo: {label:"Nomi Go事業", dot:"nomigo"},
-  uber:   {label:"Uber営業代行", dot:"uber"},
-  eigyou: {label:"営業代行", dot:"eigyou"},
-  other:  {label:"その他", dot:"other"}
+  daily:{label:"日常", dot:"daily"}, nomigo:{label:"Nomi Go事業", dot:"nomigo"},
+  uber:{label:"Uber", dot:"uber"}, eigyou:{label:"営業", dot:"eigyou"},
+  other:{label:"その他", dot:"other"}
 };
-// 金額なしメンバー用のカテゴリ
-const CAT_SIMPLE = ["daily","other"];
 
 const DEFAULT_TASKS_KYOSUKE = [
   {cat:"daily",  text:"ランニング",                   st:"07:00", et:"07:30"},
@@ -732,91 +515,70 @@ const DEFAULT_TASKS_KYOSUKE = [
   {cat:"other",  text:"食器洗い",                     st:null,    et:null},
   {cat:"daily",  text:"夜の振り返り・翌日タスク整理",   st:"22:30", et:null}
 ];
-const ROUTINE = new Set(DEFAULT_TASKS_KYOSUKE.map(t=>t.text));
-// 午前とみなす境界（この時刻より前に始まるタスクが午前）
 const MORNING_END = "12:00";
 
-let members = [], currentMember = "kyosuke", currentView = "list";
-let tasks = [], records = [], openDays = new Set(), calSelectedDay = null;
-let listScrolled = false;
+/* よく使う予定（ワンタップ用） */
+const PRESETS = {
+  common: ["買いもの","そうじ","せんたく","ごはんを作る","ゴミ出し","病院","散歩","休み"],
+  kyosuke:["営業まわり","打ち合わせ","Uber","Nomi Go","ラーメンバイト","銀行"],
+  mother: ["買いもの","病院","そうじ","洗いもの","おでかけ","お茶"],
+  sister: ["仕事","買いもの","おでかけ","そうじ","予定あり"]
+};
+const TIMESLOTS = [
+  {k:"morning", label:"あさ",   ico:"🌅", st:"08:00"},
+  {k:"noon",    label:"ひる",   ico:"☀️", st:"12:00"},
+  {k:"eve",     label:"よる",   ico:"🌙", st:"18:00"},
+  {k:"any",     label:"いつでも", ico:"🕐", st:null}
+];
+
+/* ===== 状態 ===== */
+let members = [], tasks = [], records = [];
+let view = "board";        // board / cal / mine
+let boardOffset = 0;       // 0=きょう 1=あした
+let calSelectedDay = null;
 const calExpanded = new Set();
+let addState = null;
 
 const today = new Date();
-let YEAR = today.getFullYear(), MONTH = today.getMonth();
-let DAYS_IN_MONTH = 0;
+let YEAR = today.getFullYear(), MONTH = today.getMonth(), DAYS_IN_MONTH = 0;
 const WD = ["日","月","火","水","木","金","土"];
 
-function refreshMonthVars(){
-  DAYS_IN_MONTH = new Date(YEAR, MONTH+1, 0).getDate();
+function refreshMonthVars(){ DAYS_IN_MONTH = new Date(YEAR, MONTH+1, 0).getDate(); }
+function fmt(dt){
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
 }
-function dateStr(d){
-  return YEAR + "-" + String(MONTH+1).padStart(2,"0") + "-" + String(d).padStart(2,"0");
-}
-function isCurrentMonth(){
-  return today.getFullYear()===YEAR && today.getMonth()===MONTH;
-}
+function dateStr(d){ return fmt(new Date(YEAR, MONTH, d)); }
+function isCurrentMonth(){ return today.getFullYear()===YEAR && today.getMonth()===MONTH; }
 function todayDate(){ return isCurrentMonth() ? today.getDate() : -1; }
+function boardDate(){ const d = new Date(today); d.setDate(d.getDate()+boardOffset); return d; }
 
+/* ===== 起動 ===== */
 async function init(){
-  document.getElementById("bannerImg").src = IMG.header;
   refreshMonthVars();
-  buildMonthOptions();
   const { data: mem, error } = await sb.from("members").select("*").order("sort_order");
   if(error){ showError(error); return; }
   members = mem;
-  renderMemberTabs();
+  renderTop();
   await loadMonth();
   maybeShowOmikuji();
 }
-
-function buildMonthOptions(){
-  const sel = document.getElementById("monthSelect");
-  let html = "";
-  const base = new Date(today.getFullYear(), today.getMonth(), 1);
-  for(let i=-12; i<=12; i++){
-    const dt = new Date(base.getFullYear(), base.getMonth()+i, 1);
-    const v = dt.getFullYear()+"-"+dt.getMonth();
-    html += `<option value="${v}">${dt.getFullYear()}年${dt.getMonth()+1}月</option>`;
-  }
-  sel.innerHTML = html;
-  sel.value = YEAR+"-"+MONTH;
-}
-
-function changeMonth(diff){
-  const dt = new Date(YEAR, MONTH+diff, 1);
-  YEAR = dt.getFullYear(); MONTH = dt.getMonth();
-  document.getElementById("monthSelect").value = YEAR+"-"+MONTH;
-  afterMonthChange();
-}
-function jumpMonth(v){
-  const [y,m] = v.split("-").map(Number);
-  YEAR = y; MONTH = m;
-  afterMonthChange();
-}
-async function afterMonthChange(){
-  refreshMonthVars();
-  calSelectedDay = null; listScrolled = true;
-  const y = window.scrollY;
-  document.getElementById("app").innerHTML = '<div class="status">読み込み中...</div>';
-  await loadMonth();
-  window.scrollTo(0, y);
+function showError(e){
+  document.getElementById("app").innerHTML =
+    `<div class="status">よみこみに失敗しました<br>${e.message||""}</div>`;
 }
 
 async function loadMonth(){
-  const from = dateStr(1), to = dateStr(DAYS_IN_MONTH);
+  const dFrom = new Date(YEAR, MONTH, 0), dTo = new Date(YEAR, MONTH+1, 2);
   const [t, r] = await Promise.all([
-    sb.from("tasks").select("*").gte("task_date",from).lte("task_date",to).order("sort_order"),
-    sb.from("daily_records").select("*").gte("record_date",from).lte("record_date",to)
+    sb.from("tasks").select("*").gte("task_date",fmt(dFrom)).lte("task_date",fmt(dTo)).order("sort_order"),
+    sb.from("daily_records").select("*").gte("record_date",fmt(dFrom)).lte("record_date",fmt(dTo))
   ]);
   if(t.error){ showError(t.error); return; }
-  tasks = t.data || [];
-  records = r.data || [];
+  tasks = t.data || []; records = r.data || [];
   await seedKyosuke();
-  renderMemberTabs();
-  render();
+  renderTop(); render();
 }
 
-// 享祐のデフォルトタスクを今月分だけ自動作成（未作成の日のみ）
 async function seedKyosuke(){
   const existing = new Set(tasks.filter(x=>x.member_id==="kyosuke").map(x=>x.task_date));
   const rows = [];
@@ -828,511 +590,603 @@ async function seedKyosuke(){
         sort_order:i, start_time:dt.st, end_time:dt.et});
     });
   }
-  if(rows.length === 0) return;
+  if(!rows.length) return;
   const { data, error } = await sb.from("tasks").insert(rows).select();
   if(!error) tasks = tasks.concat(data);
 }
 
-function showError(e){
-  document.getElementById("app").innerHTML =
-    `<div class="status">読み込みに失敗しました。<br>${e.message||""}</div>`;
+/* ===== データ取得 ===== */
+function isMorningTask(t){ return !!(t.start_time && t.start_time < MORNING_END); }
+function isRoutine(t){
+  if(t.member_id !== "kyosuke") return false;
+  if((t.sort_order||0) >= 900) return false;
+  return DEFAULT_TASKS_KYOSUKE.some(x=>x.text === t.text);
 }
-
-function renderMemberTabs(){
-  const el = document.getElementById("memberTabs");
-  const tdate = todayDate();
-
-  // 「みんな」タブ
-  let allRem = "";
-  if(tdate > 0){
-    let rem = 0, tot = 0;
-    members.forEach(m=>{
-      const dt = tasksFor(m.id, tdate, dateStr(tdate));
-      tot += dt.length; rem += dt.filter(t=>!isDone(t)).length;
-    });
-    allRem = tot===0 ? `<span class="mrem">—</span>`
-      : (rem===0 ? `<span class="mrem done">ぜんぶ完了</span>`
-                 : `<span class="mrem left">のこり${rem}</span>`);
-  }
-  let html = `<div class="member-tab all ${currentMember==='all'?'active':''}" data-m="all"
-      onclick="switchMember('all')">
-      <div class="all-faces">${members.map(m=>`<img src="${IMG[m.id]}" alt="">`).join("")}</div>
-      <span class="mn">みんな</span>
-      ${allRem}
-    </div>`;
-
-  html += members.map(m=>{
-    let rem = "";
-    if(tdate > 0){
-      const dt = tasksFor(m.id, tdate, dateStr(tdate));
-      const r = dt.filter(t=>!isDone(t)).length;
-      rem = dt.length===0 ? `<span class="mrem">—</span>`
-        : (r===0 ? `<span class="mrem done">ぜんぶ完了</span>`
-                 : `<span class="mrem left">のこり${r}</span>`);
-    }
-    return `<div class="member-tab ${m.id===currentMember?'active':''}" data-m="${m.id}"
-      onclick="switchMember('${m.id}')">
-      <img src="${IMG[m.id]}" alt="">
-      <span class="mn">${m.name}</span>
-      ${rem}
-    </div>`;
-  }).join("");
-
-  el.innerHTML = html;
-}
-
-// 指定メンバー・指定日の表示対象タスク（ラーメンバイト考慮）
-function tasksFor(memberId, d, ds){
+function tasksForDs(memberId, ds){
   let dt = tasks.filter(t=>t.member_id===memberId && t.task_date===ds);
   if(hasMoney(memberId)){
-    const pv = new Date(YEAR, MONTH, d-1);
-    const pds = `${pv.getFullYear()}-${String(pv.getMonth()+1).padStart(2,"0")}-${String(pv.getDate()).padStart(2,"0")}`;
-    const pr = records.find(x=>x.member_id===memberId && x.record_date===pds);
+    const p = new Date(ds+"T00:00:00"); p.setDate(p.getDate()-1);
+    const pr = records.find(x=>x.member_id===memberId && x.record_date===fmt(p));
     if(pr && pr.ramen_shift) dt = dt.filter(t=>!isMorningTask(t));
   }
   return dt;
 }
-
-function switchMember(id){
-  const y = window.scrollY;
-  currentMember = id;
-  renderMemberTabs();
-  render();
-  window.scrollTo(0, y);
-}
-function switchView(v){
-  currentView = v;
-  document.querySelectorAll(".view-tab").forEach(b=>
-    b.classList.toggle("active", b.dataset.view===v));
-  render();
-}
-function render(){
-  if(currentView==="list") renderList();
-  else if(currentView==="cal") renderCalendar();
-  else renderViz();
-}
-
-
-// ===== 今日のまとめ（一番上の大きなカード） =====
-function renderHero(){
-  const td = todayDate();
-  if(td <= 0) return "";
-  const ds = dateStr(td);
-
-  let total = 0, done = 0, who = "";
-  if(isAll()){
-    members.forEach(m=>{
-      const dt = tasksFor(m.id, td, ds);
-      total += dt.length; done += dt.filter(isDone).length;
-    });
-    who = "家族みんな";
-  } else {
-    const dt = tasksFor(currentMember, td, ds);
-    total = dt.length; done = dt.filter(isDone).length;
-    who = callOf(currentMember);
-  }
-  const remain = total - done;
-  const pct = total ? Math.round(done/total*100) : 0;
-  const wd = WD[new Date(YEAR,MONTH,td).getDay()];
-  const allDone = total > 0 && remain === 0;
-
-  let num, unit, msg;
-  if(total === 0){ num = "—"; unit = ""; msg = "今日はまだ予定がありません"; }
-  else if(allDone){ num = "0"; unit = "件"; msg = `${who}、今日はぜんぶ終わりました！`; }
-  else { num = remain; unit = "件"; msg = `${who}、あと${remain}件で今日は完了！`; }
-
-  return `<div class="hero ${allDone?'done':''}">
-    <div class="hero-lbl">${MONTH+1}月${td}日（${wd}）・のこり</div>
-    <div class="hero-main">
-      <div class="hero-num">${num}</div>
-      <div class="hero-unit">${unit}</div>
-    </div>
-    <div class="hero-msg">${msg}</div>
-    <div class="hero-bar"><div class="hero-fill" style="width:${pct}%"></div></div>
-    <div class="hero-foot">
-      <span>${done} / ${total} 完了（${pct}%）</span>
-      <button class="hero-jump" onclick="jumpToday()">今日をひらく</button>
-    </div>
-  </div>`;
-}
-
-function jumpToday(){
-  const td = todayDate();
-  if(td <= 0) return;
-  if(currentView !== "list"){ switchView("list"); }
-  openDays.add(td);
-  render();
-  setTimeout(()=>{
-    const el = document.getElementById("day-"+td);
-    if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
-  }, 100);
-}
-
-// ===== リスト =====
-function renderList(){
-  let html = renderHero();
-  html += (hasMoney(currentMember) || isAll()) ? renderGoalStrip() : "";
-  const td = todayDate();
-
-  for(let d=1; d<=DAYS_IN_MONTH; d++){
-    const ds = dateStr(d);
-    if(isAll()){ html += renderAllDay(d, ds, td); continue; }
-    const dt = visibleTasks(d, ds);
-    const rec = getRecord(currentMember, ds);
-    const done = dt.filter(isDone).length, total = dt.length;
-    const pct = total ? Math.round(done/total*100) : 0;
-    const wdi = new Date(YEAR,MONTH,d).getDay();
-    const wdCls = wdi===0?"sun":(wdi===6?"sat":"");
-
-    let meta = total===0 ? "タスクなし"
-      : (done===total ? `<span class="alldone">✓ 全${total}件 完了</span>` : `${done}/${total} 完了`);
-    if(isMorningOff(d)) meta = `<span class="rest-tag">🍜 午前休み</span> ` + meta;
-    if(hasMoney(currentMember)){
-      const yen = rec.uber_sales + rec.eigyou_self*EIGYOU_SELF_YEN + rec.eigyou_team*EIGYOU_TEAM_YEN;
-      meta += ` ／ 売上 <b>¥${yen.toLocaleString()}</b>`;
-    }
-
-    const allDone = total>0 && done===total;
-    html += `<div class="day-block ${openDays.has(d)?'open':''} ${d===td?'is-today':''} ${allDone?'all-done':''}" id="day-${d}">
-      <div class="day-head" onclick="toggleDay(${d})">
-        <div class="left">
-          <div class="day-date">
-            <div class="day-num ${d===td?'today':''}">${d}</div>
-            <div class="day-weekday ${wdCls}">${WD[wdi]}</div>
-          </div>
-          <div class="day-info">
-            ${d===td?'<div class="today-chip">きょう</div>':''}
-            <div class="day-meta">${meta}</div>
-            <div class="day-progress-bar"><div class="day-progress-fill" style="width:${pct}%"></div></div>
-          </div>
-        </div>
-        <div class="chevron">▶</div>
-      </div>
-      <div class="day-body">
-        ${renderRamenRow(d, ds, rec)}
-        ${renderDayTasks(d, ds, dt, rec)}
-        ${renderAddRow(d)}
-      </div>
-    </div>`;
-  }
-  document.getElementById("app").innerHTML = html;
-  if(td>0 && !listScrolled && currentView==="list"){
-    listScrolled = true;
-    const el = document.getElementById("day-"+td);
-    if(el) setTimeout(()=>el.scrollIntoView({behavior:"smooth", block:"center"}), 120);
-  }
-}
-
-function renderRamenRow(d, ds, rec){
-  if(!hasMoney(currentMember)) return "";
-  const on = !!rec.ramen_shift;
-  return `<div class="ramen-row ${on?'on':''}" onclick="toggleRamen('${ds}',${d})">
-    <div class="ramen-ico">🍜</div>
-    <div class="ramen-txt">
-      <div class="ramen-t">この日はラーメンバイト</div>
-      <div class="ramen-s">${on ? "翌日の午前タスクは自動でお休みになります" : "入れると翌日の午前が休みになります"}</div>
-    </div>
-    <div class="ramen-sw ${on?'on':''}"><span></span></div>
-  </div>`;
-}
-
-function renderAllDay(d, ds, td){
-  const wdi = new Date(YEAR,MONTH,d).getDay();
-  const wdCls = wdi===0?"sun":(wdi===6?"sat":"");
-  let done=0, total=0;
-  const blocks = members.map(m=>{
-    const dt = tasksFor(m.id, d, ds).slice().sort(sortByTime);
-    const dn = dt.filter(isDone).length;
-    done += dn; total += dt.length;
-    const rows = dt.length===0
-      ? `<div class="all-empty">タスクなし</div>`
-      : dt.map(t=>`<div class="task ${t.done?'done':''} ${t.skipped?'skip':''}">
-          <input type="checkbox" id="a-${t.id}" ${t.done?'checked':''}
-            ${t.skipped?'disabled':''} onchange="toggleTaskFor('${t.id}','${m.id}',${d})">
-          <label for="a-${t.id}">${skipTag(t)}${timeBadge(t)}${esc(t.text)}</label>
-        </div>`).join("");
-    return `<div class="all-block">
-      <div class="all-head">
-        <img src="${IMG[m.id]}" class="all-face" style="border-color:${m.color}">
-        <span class="all-name">${m.name}</span>
-        <span class="all-count ${dt.length&&dn===dt.length?'ok':''}">${dn}/${dt.length}</span>
-      </div>${rows}</div>`;
-  }).join("");
-
-  const pct = total ? Math.round(done/total*100) : 0;
-  const meta = total===0 ? "タスクなし"
-    : (done===total ? `<span class="alldone">✓ 家族全員 完了</span>` : `家族全体 ${done}/${total} 完了`);
-
-  const allDone = total>0 && done===total;
-  return `<div class="day-block ${openDays.has(d)?'open':''} ${d===td?'is-today':''} ${allDone?'all-done':''}" id="day-${d}">
-    <div class="day-head" onclick="toggleDay(${d})">
-      <div class="left">
-        <div class="day-date">
-          <div class="day-num ${d===td?'today':''}">${d}</div>
-          <div class="day-weekday ${wdCls}">${WD[wdi]}</div>
-        </div>
-        <div class="day-info">
-          ${d===td?'<div class="today-chip">きょう</div>':''}
-          <div class="day-meta">${meta}</div>
-          <div class="day-progress-bar"><div class="day-progress-fill" style="width:${pct}%"></div></div>
-        </div>
-      </div>
-      <div class="chevron">▶</div>
-    </div>
-    <div class="day-body">${blocks}</div>
-  </div>`;
-}
-
-// みんな画面からのチェック（相手のタスクも押せる）
-async function toggleTaskFor(id, memberId, d){
-  const t = tasks.find(x=>x.id===id);
-  if(!t) return;
-  const was = t.done;
-  t.done = !t.done;
-  render(); renderMemberTabs();
-  await sb.from("tasks").update({done:t.done}).eq("id",id);
-  if(was) return;
-  const ds = dateStr(d);
-  const after = tasksFor(memberId, d, ds);
-  if(after.length>0 && after.every(isDone)){
-    setTimeout(()=>showPopFor("full", d, memberId), 260);
-  }
-}
-
-function renderAddRow(d){
-  const wd = WD[new Date(YEAR,MONTH,d).getDay()];
-  const cats = hasMoney(currentMember)
-    ? ["daily","nomigo","uber","eigyou","other"]
-    : CAT_SIMPLE;
-  const opts = cats.map(c=>`<option value="${c}">${CAT_META[c].label}</option>`).join("");
-  return `<div class="add-row">
-      <select id="cat-${d}">${opts}</select>
-      <input type="text" id="new-${d}" placeholder="タスクを追加...">
-      <button onclick="addTask(${d})">追加</button>
-    </div>
-    <div class="time-row">
-      <span class="time-lbl">時間（任意）</span>
-      <input type="time" id="st-${d}" class="time-in">
-      <span class="time-sep">〜</span>
-      <input type="time" id="et-${d}" class="time-in">
-    </div>
-    <div class="repeat-row">
-      <select id="rep-${d}">
-        <option value="once">この日だけ</option>
-        <option value="daily">毎日（今月の残り全部）</option>
-        <option value="weekly">毎週${wd}曜（今月の残り）</option>
-        <option value="weekday">平日のみ（今月の残り）</option>
-      </select>
-    </div>`;
-}
-
-function renderGoalStrip(){
-  const g = GOALS.kyosuke;
-  let uber=0,self=0,team=0;
-  records.filter(r=>r.member_id==="kyosuke").forEach(r=>{
-    uber+=r.uber_sales; self+=r.eigyou_self; team+=r.eigyou_team;
-  });
-  const ey = self*EIGYOU_SELF_YEN + team*EIGYOU_TEAM_YEN;
-  const goalAll = g.uber + g.eigyou;
-  const actAll = uber + ey;
-  const left = daysLeft();
-
-  return `${renderPaceBar(goalAll, actAll, left)}
-  <div class="goal-strip">
-    <div class="goal-card uber"><div class="label">Uber営業代行</div>
-      <div class="value">¥${g.uber.toLocaleString()}</div>
-      <div class="sub">実績 ¥${uber.toLocaleString()}</div>${remainHtml(g.uber,uber)}
-      <div class="sub pace">1日 ¥${perDay(g.uber-uber, left).toLocaleString()}</div></div>
-    <div class="goal-card eigyou"><div class="label">営業代行</div>
-      <div class="value">¥${g.eigyou.toLocaleString()}</div>
-      <div class="sub">${self+team}件・¥${ey.toLocaleString()}</div>${remainHtml(g.eigyou,ey)}
-      <div class="sub pace">1日 ¥${perDay(g.eigyou-ey, left).toLocaleString()}</div></div>
-    <div class="goal-card total"><div class="label">合計目標</div>
-      <div class="value">¥${goalAll.toLocaleString()}</div>
-      <div class="sub">実績 ¥${actAll.toLocaleString()}</div>${remainHtml(goalAll,actAll)}
-      <div class="sub pace">1日 ¥${perDay(goalAll-actAll, left).toLocaleString()}</div></div>
-  </div></div>`;
-}
-
-// 今月の残り日数（今日を含む）。過去月は0、未来月は月の日数
-function daysLeft(){
-  if(isCurrentMonth()) return DAYS_IN_MONTH - today.getDate() + 1;
-  const cur = new Date(today.getFullYear(), today.getMonth(), 1);
-  const view = new Date(YEAR, MONTH, 1);
-  return view > cur ? DAYS_IN_MONTH : 0;
-}
-function perDay(remain, left){
-  if(remain <= 0) return 0;
-  if(left <= 0) return remain;
-  return Math.ceil(remain/left);
-}
-
-// ペース表示バー
-function renderPaceBar(goal, actual, left){
-  const remain = Math.max(goal-actual, 0);
-  const need = perDay(remain, left);
-  const pct = goal ? Math.min(Math.round(actual/goal*100), 100) : 0;
-  let msg;
-  if(remain === 0) msg = `今月の目標達成！`;
-  else if(left <= 0) msg = `この月は終了しています（未達 ¥${remain.toLocaleString()}）`;
-  else msg = `残り${left}日 → 1日あたり <b>¥${need.toLocaleString()}</b> ペース`;
-  return `<div class="pace-box">
-    <div class="pace-top"><span class="pace-msg">${msg}</span></div>
-    <div class="pace-bar"><div class="pace-fill" style="width:${pct}%"></div></div>
-  </div>`;
-}
-
-function remainHtml(goal, actual){
-  const r = goal-actual;
-  return r<=0
-    ? `<div class="sub remain achieved">達成 +¥${Math.abs(r).toLocaleString()}</div>`
-    : `<div class="sub remain">残り ¥${r.toLocaleString()}</div>`;
-}
-
-function renderDayTasks(d, ds, dt, rec){
-  let html = "";
-  const cats = hasMoney(currentMember)
-    ? ["daily","nomigo","uber","eigyou","other"] : CAT_SIMPLE;
-  cats.forEach(cat=>{
-    const ct = dt.filter(t=>t.category===cat);
-    const needRec = hasMoney(currentMember) && (cat==="uber"||cat==="eigyou");
-    if(ct.length===0 && !needRec) return;
-    html += `<div class="section-label"><span class="dot ${CAT_META[cat].dot}"></span>${CAT_META[cat].label}</div>`;
-    ct.sort(sortByTime);
-    ct.forEach(t=>{
-      html += `<div class="task ${t.done?'done':''} ${t.skipped?'skip':''}">
-        <input type="checkbox" id="t-${t.id}" ${t.done?'checked':''}
-          ${t.skipped?'disabled':''} onchange="toggleTask('${t.id}',${d})">
-        <label for="t-${t.id}">${skipTag(t)}${timeBadge(t)}${esc(t.text)}</label>
-        <button class="skipbtn ${t.skipped?'on':''}" title="本日やらない"
-          onclick="toggleSkip('${t.id}',${d})">${t.skipped?'もどす':'今日は休み'}</button>
-        <button class="del" onclick="delTask('${t.id}')">×</button>
-      </div>`;
-    });
-    if(needRec && cat==="uber"){
-      html += `<div class="record-row">
-        <label class="record-label">当日のUber売上（円）</label>
-        <input type="number" inputmode="numeric" class="record-input" value="${rec.uber_sales||''}"
-          placeholder="例：5000" onchange="saveRecord('${ds}','uber_sales',this.value)"></div>`;
-    }
-    if(needRec && cat==="eigyou"){
-      const yen = rec.eigyou_self*EIGYOU_SELF_YEN + rec.eigyou_team*EIGYOU_TEAM_YEN;
-      html += `<div class="record-row two-col">
-        <div><label class="record-label">自分の成約数</label>
-          <input type="number" inputmode="numeric" class="record-input" value="${rec.eigyou_self||''}"
-            placeholder="0" onchange="saveRecord('${ds}','eigyou_self',this.value)"></div>
-        <div><label class="record-label">下の人の成約数</label>
-          <input type="number" inputmode="numeric" class="record-input" value="${rec.eigyou_team||''}"
-            placeholder="0" onchange="saveRecord('${ds}','eigyou_team',this.value)"></div>
-      </div><div class="record-hint">当日の営業代行 見込み：¥${yen.toLocaleString()}</div>`;
-    }
-  });
-  return html;
-}
-
-// 前日がラーメンバイトなら、その日の午前タスクは表示しない
-function isMorningOff(d){
-  if(!hasMoney(currentMember)) return false;
-  const prev = new Date(YEAR, MONTH, d-1);
-  const pds = `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,"0")}-${String(prev.getDate()).padStart(2,"0")}`;
-  const r = records.find(x=>x.member_id===currentMember && x.record_date===pds);
-  return !!(r && r.ramen_shift);
-}
-function isMorningTask(t){
-  return !!(t.start_time && t.start_time < MORNING_END);
-}
-// その日に表示するタスク（午前オフなら午前を除く）
-function visibleTasks(d, ds){
-  return tasksFor(currentMember, d, ds);
-}
-
-function getRecord(id, ds){
-  return records.find(x=>x.member_id===id && x.record_date===ds)
-    || {uber_sales:0, eigyou_self:0, eigyou_team:0};
-}
-function skipTag(t){
-  return t.skipped ? `<span class="skip-tag">本日やらない</span>` : "";
-}
-async function toggleSkip(id, d){
-  const t = tasks.find(x=>x.id===id);
-  if(!t) return;
-  const nowSkip = !t.skipped;
-  t.skipped = nowSkip;
-  t.done = nowSkip ? true : false;
-  render(); renderMemberTabs();
-  await sb.from("tasks").update({skipped:t.skipped, done:t.done}).eq("id",id);
-
-  // やらないに設定した結果、その日が全部片付いたらお祝い
-  if(nowSkip){
-    const ds = dateStr(d);
-    const after = visibleTasks(d, ds);
-    if(after.length>0 && after.every(x=>x.done)) setTimeout(()=>showPop("full", d), 260);
-  }
-}
-function skipTag(t){
-  return t.skipped ? `<span class="skip-tag">お休み</span>` : "";
-}
-function timeBadge(t){
-  if(!t.start_time) return "";
-  const f = v => (v||"").slice(0,5);
-  const label = t.end_time ? `${f(t.start_time)}–${f(t.end_time)}` : f(t.start_time);
-  return `<span class="task-time">${label}</span>`;
+function tasksFor(memberId, d, ds){ return tasksForDs(memberId, ds || dateStr(d)); }
+function eventsOf(memberId, d, ds){
+  return tasksForDs(memberId, ds).filter(t=>!isRoutine(t)).sort(sortByTime);
 }
 function sortByTime(a,b){
   const av = a.start_time || "99:99", bv = b.start_time || "99:99";
   if(av !== bv) return av < bv ? -1 : 1;
   return (a.sort_order||0) - (b.sort_order||0);
 }
+function getRecordDs(id, ds){
+  return records.find(x=>x.member_id===id && x.record_date===ds)
+    || {uber_sales:0, eigyou_self:0, eigyou_team:0, ramen_shift:false};
+}
 function esc(s){ const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
 
-function toggleDay(d){
-  if(openDays.has(d)) openDays.delete(d); else openDays.add(d);
-  document.getElementById("day-"+d).classList.toggle("open");
+/* ===== 上部 ===== */
+function renderTop(){
+  const bd = boardDate();
+  document.getElementById("todayStr").innerHTML =
+    `${bd.getMonth()+1}月${bd.getDate()}日<small>${WD[bd.getDay()]}よう日</small>`;
+  document.getElementById("topFam").innerHTML =
+    members.map(m=>`<img src="${IMG[m.id]}" alt="">`).join("");
+
+  const t0 = new Date(today), t1 = new Date(today); t1.setDate(t1.getDate()+1);
+  const c = (dt)=>{
+    const ds = fmt(dt);
+    let tot=0, rem=0;
+    members.forEach(m=>{ const x=tasksForDs(m.id, ds); tot+=x.length; rem+=x.filter(t=>!isDone(t)).length; });
+    return tot===0 ? "よてい なし" : (rem===0 ? "ぜんぶ おわり" : `のこり ${rem}こ`);
+  };
+  document.getElementById("daySw").innerHTML = `
+    <button class="${boardOffset===0?'on':''}" onclick="setDay(0)">きょう<small>${c(t0)}</small></button>
+    <button class="${boardOffset===1?'on':''}" onclick="setDay(1)">あした<small>${c(t1)}</small></button>`;
+}
+function setDay(o){ boardOffset = o; renderTop(); render(); }
+
+function go(v){
+  view = v;
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("on", b.dataset.v===v));
+  document.getElementById("addBig").style.display = (v==="mine") ? "none" : "flex";
+  document.getElementById("daySw").style.display = (v==="board") ? "flex" : "none";
+  render(); window.scrollTo(0,0);
+}
+function render(){
+  const y = window.scrollY;
+  if(view==="board") renderBoard();
+  else if(view==="cal") renderCal();
+  else renderMine();
+  if(view!=="mine" && window.scrollY!==y) window.scrollTo(0,y);
 }
 
-async function toggleTask(id, d){
+/* ================= ボード（メイン画面） ================= */
+function renderBoard(){
+  const bd = boardDate();
+  const ds = fmt(bd);
+
+  const cols = members.map(m=>{
+    const dt = tasksForDs(m.id, ds).slice().sort(sortByTime);
+    const done = dt.filter(isDone).length;
+    const allDone = dt.length>0 && done===dt.length;
+
+    let body = "";
+    if(dt.length === 0){
+      body = `<div class="col-empty">よてい<br>なし</div>`;
+    } else if(allDone){
+      body = `<div class="col-clear"><span class="em">🎉</span>ぜんぶ<br>おわった！</div>`;
+      body += dt.map(t=>cardHtml(t, m)).join("");
+    } else {
+      const groups = [
+        {l:"あさ",   i:"🌅", f:t=>t.start_time && t.start_time < "12:00"},
+        {l:"ひる",   i:"☀️", f:t=>t.start_time && t.start_time >= "12:00" && t.start_time < "17:00"},
+        {l:"よる",   i:"🌙", f:t=>t.start_time && t.start_time >= "17:00"},
+        {l:"いつでも",i:"🕐", f:t=>!t.start_time}
+      ];
+      groups.forEach(g=>{
+        const list = dt.filter(g.f);
+        if(!list.length) return;
+        body += `<div class="slot"><div class="slot-l"><i>${g.i}</i>${g.l}</div>`;
+        body += list.map(t=>cardHtml(t, m)).join("");
+        body += `</div>`;
+      });
+    }
+
+    return `<div class="col ${COLCLS[m.id]||''} ${allDone?'done':''}">
+      <div class="col-head">
+        <img src="${IMG[m.id]}" alt="">
+        <div class="col-name">${esc(m.name)}</div>
+        <div class="col-badge ${allDone?'ok':''}">${dt.length===0?'—':(allDone?'かんりょう':'のこり'+(dt.length-done))}</div>
+      </div>
+      <div class="col-body">${body}</div>
+    </div>`;
+  }).join("");
+
+  const label = boardOffset===0 ? "きょう やること" : "あした の よてい";
+  document.getElementById("app").innerHTML = `
+    <div class="board">
+      <div class="board-ttl"><h2>${label}</h2><span>おした ら かんりょう</span></div>
+      <div class="cols">${cols}</div>
+    </div>
+    <div class="foot">かぞく みんなで つかえます 🐈</div>`;
+}
+
+function cardHtml(t, m){
+  const c = t.member_id==="kyosuke" ? "var(--c-me)"
+          : t.member_id==="mother"  ? "var(--c-mom)" : "var(--c-sis)";
+  const tm = t.start_time ? t.start_time.slice(0,5) + (t.end_time? "–"+t.end_time.slice(0,5) : "") : "";
+  const cls = t.skipped ? "rest" : (t.done ? "fin" : "");
+  const mark = t.skipped ? "休" : "✓";
+  return `<button class="card ${cls}" style="--c:${c}" onclick="openDetail('${t.id}')">
+    ${tm?`<div class="cm">${tm}</div>`:""}
+    <div class="ct">${esc(t.text)}</div>
+    <div class="card-check">${mark}</div>
+  </button>`;
+}
+
+/* ================= タスクを押した時 ================= */
+function openDetail(id){
   const t = tasks.find(x=>x.id===id);
   if(!t) return;
-  const ds = dateStr(d);
-  const before = visibleTasks(d, ds);
-  const beforeDone = before.filter(isDone).length;
-  const was = t.done;
-  t.done = !t.done;
-  render(); renderMemberTabs();
-  await sb.from("tasks").update({done:t.done}).eq("id",id);
+  const m = members.find(x=>x.id===t.member_id) || {};
+  const tm = t.start_time ? t.start_time.slice(0,5) + (t.end_time? " 〜 "+t.end_time.slice(0,5) : "") : "じかん しどう なし";
+  const st = t.skipped ? "きょうは おやすみ" : (t.done ? "おわりました" : "まだ です");
 
-  if(was) return; // チェックを外した時は出さない
-  const after = visibleTasks(d, ds);
-  const total = after.length;
-  const afterDone = after.filter(isDone).length;
-  if(total === 0) return;
-
-  const half = Math.ceil(total/2);
-  if(afterDone === total){
-    setTimeout(()=>showPop("full", d), 260);
-  } else if(beforeDone < half && afterDone >= half){
-    setTimeout(()=>showPop("half", d), 260);
-  }
+  openSheet(`
+    <div class="det-t">${esc(t.text)}</div>
+    <div class="det-s">${esc(m.name||"")}　／　${tm}　／　${st}</div>
+    <div class="det-btns">
+      ${t.done && !t.skipped
+        ? `<button class="det-b undone" onclick="actDone('${id}',false)">↩︎ まだ に もどす</button>`
+        : `<button class="det-b done" onclick="actDone('${id}',true)">✓ おわった！</button>`}
+      <button class="det-b rest" onclick="actSkip('${id}')">
+        ${t.skipped ? "↩︎ おやすみ を やめる" : "☕️ きょうは やらない"}
+      </button>
+      <button class="det-b del" onclick="actDel('${id}')">この よてい を けす</button>
+      <button class="sh-btn sub" onclick="closeSheet()">とじる</button>
+    </div>`);
 }
 
-const HALF_MSG = [
-  "半分きたよ！",
-  "いい調子！",
-  "折り返しだよ",
-  "もうちょっと！"
-];
+async function actDone(id, val){
+  const t = tasks.find(x=>x.id===id); if(!t) return;
+  const before = celebCheck(t, "before");
+  t.done = val; if(val) t.skipped = false;
+  closeSheet(); renderTop(); render();
+  await sb.from("tasks").update({done:t.done, skipped:t.skipped}).eq("id",id);
+  if(val) celebCheck(t, "after", before);
+}
+async function actSkip(id){
+  const t = tasks.find(x=>x.id===id); if(!t) return;
+  const before = celebCheck(t, "before");
+  t.skipped = !t.skipped; if(t.skipped) t.done = false;
+  closeSheet(); renderTop(); render();
+  await sb.from("tasks").update({done:t.done, skipped:t.skipped}).eq("id",id);
+  if(t.skipped) celebCheck(t, "after", before);
+}
+async function actDel(id){
+  const t = tasks.find(x=>x.id===id); if(!t) return;
+  tasks = tasks.filter(x=>x.id!==id);
+  closeSheet(); renderTop(); render();
+  await sb.from("tasks").delete().eq("id",id);
+}
+
+/* 半分・全部のお祝い判定 */
+function celebCheck(t, phase, before){
+  const ds = t.task_date;
+  const dt = tasksForDs(t.member_id, ds);
+  const total = dt.length, done = dt.filter(isDone).length;
+  if(phase === "before") return {total, done};
+  if(total === 0) return;
+  const half = Math.ceil(total/2);
+  const d = Number(ds.slice(8,10));
+  if(done === total) setTimeout(()=>showPopFor("full", d, t.member_id), 240);
+  else if(before && before.done < half && done >= half)
+    setTimeout(()=>showPopFor("half", d, t.member_id), 240);
+}
+
+/* ================= 予定をいれる ================= */
+function openAdd(){
+  const bd = boardDate();
+  addState = { member:null, text:"", slot:null, date:fmt(bd), repeat:"once" };
+  stepWho();
+}
+function stepWho(){
+  openSheet(`
+    <div class="sh-step">STEP 1 / 3</div>
+    <div class="sh-q">だれ の よてい？</div>
+    <div class="pick-fam">
+      ${members.map(m=>`
+        <button class="${addState.member===m.id?'on':''}" onclick="pickWho('${m.id}')">
+          <img src="${IMG[m.id]}" alt=""><span>${esc(m.name)}</span>
+        </button>`).join("")}
+    </div>
+    <button class="sh-btn sub" onclick="closeSheet()">やめる</button>`);
+}
+function pickWho(id){ addState.member = id; stepWhat(); }
+
+function stepWhat(){
+  const pre = (PRESETS[addState.member] || []).concat(PRESETS.common);
+  const uniq = [...new Set(pre)];
+  openSheet(`
+    <button class="sh-back" onclick="stepWho()">‹ もどる</button>
+    <div class="sh-step">STEP 2 / 3</div>
+    <div class="sh-q">なに を する？</div>
+    <div class="chips">
+      ${uniq.map(p=>`<button class="chip big ${addState.text===p?'on':''}"
+        onclick="pickWhat('${esc(p)}')">${esc(p)}</button>`).join("")}
+    </div>
+    <div class="sh-lbl">じぶん で かく</div>
+    <input class="sh-input" id="freeText" placeholder="たとえば：〇〇に行く"
+      value="${esc(addState.text)}">
+    <button class="sh-btn" onclick="pickWhatFree()">つぎ へ ›</button>`);
+}
+function pickWhat(p){ addState.text = p; stepWhen(); }
+function pickWhatFree(){
+  const v = (document.getElementById("freeText").value || "").trim();
+  if(!v){ alert("なにを するか かいてください"); return; }
+  addState.text = v; stepWhen();
+}
+
+function stepWhen(){
+  const bd = new Date(addState.date+"T00:00:00");
+  openSheet(`
+    <button class="sh-back" onclick="stepWhat()">‹ もどる</button>
+    <div class="sh-step">STEP 3 / 3</div>
+    <div class="sh-q">いつ？</div>
+    <div class="sh-lbl">ひづけ</div>
+    <div class="chips">
+      ${[0,1,2].map(o=>{
+        const d = new Date(today); d.setDate(d.getDate()+o);
+        const lbl = o===0?"きょう":(o===1?"あした":`${d.getMonth()+1}/${d.getDate()}`);
+        return `<button class="chip ${addState.date===fmt(d)?'on':''}"
+          onclick="pickDate('${fmt(d)}')">${lbl}</button>`;
+      }).join("")}
+      <button class="chip" onclick="pickDateOther()">ほかの日</button>
+    </div>
+    <div class="sh-lbl">じかんたい</div>
+    <div class="chips">
+      ${TIMESLOTS.map(s=>`<button class="chip big ${addState.slot===s.k?'on':''}"
+        onclick="pickSlot('${s.k}')">${s.ico} ${s.label}</button>`).join("")}
+    </div>
+    <div class="sh-lbl">くりかえし</div>
+    <div class="chips">
+      <button class="chip ${addState.repeat==='once'?'on':''}" onclick="pickRep('once')">この日だけ</button>
+      <button class="chip ${addState.repeat==='daily'?'on':''}" onclick="pickRep('daily')">まいにち</button>
+      <button class="chip ${addState.repeat==='weekly'?'on':''}" onclick="pickRep('weekly')">まいしゅう ${WD[bd.getDay()]}よう</button>
+      <button class="chip ${addState.repeat==='weekday'?'on':''}" onclick="pickRep('weekday')">へいじつ</button>
+    </div>
+    <button class="sh-btn" onclick="saveAdd()">これ で いれる ✓</button>`);
+}
+function pickDate(ds){ addState.date = ds; stepWhen(); }
+function pickDateOther(){
+  const v = prompt("ひづけ を いれてください（れい：2026-08-05）", addState.date);
+  if(v && /^\d{4}-\d{2}-\d{2}$/.test(v)){ addState.date = v; stepWhen(); }
+}
+function pickSlot(k){ addState.slot = k; stepWhen(); }
+function pickRep(r){ addState.repeat = r; stepWhen(); }
+
+async function saveAdd(){
+  const a = addState;
+  if(!a.member || !a.text){ alert("だれの、なにを するか えらんでください"); return; }
+  const slot = TIMESLOTS.find(s=>s.k===a.slot);
+  const st = slot ? slot.st : null;
+
+  const base = new Date(a.date+"T00:00:00");
+  const dayList = repeatDates(base, a.repeat);
+  const rows = dayList.map(ds=>({
+    member_id:a.member, task_date:ds, category:"other",
+    text:a.text, sort_order:999, start_time:st, end_time:null
+  }));
+  closeSheet();
+  const { data, error } = await sb.from("tasks").insert(rows).select();
+  if(!error){
+    tasks = tasks.concat(data);
+    renderTop(); render();
+    if(dayList.length>1) alert(`「${a.text}」を ${dayList.length}日ぶん いれました`);
+  } else {
+    alert("ほぞん できませんでした");
+  }
+}
+function repeatDates(base, rep){
+  if(rep==="once") return [fmt(base)];
+  const out = [];
+  const last = new Date(base.getFullYear(), base.getMonth()+1, 0).getDate();
+  const twd = base.getDay();
+  for(let d=base.getDate(); d<=last; d++){
+    const dt = new Date(base.getFullYear(), base.getMonth(), d);
+    const wd = dt.getDay();
+    if(rep==="daily") out.push(fmt(dt));
+    else if(rep==="weekly" && wd===twd) out.push(fmt(dt));
+    else if(rep==="weekday" && wd>=1 && wd<=5) out.push(fmt(dt));
+  }
+  return out;
+}
+
+/* ===== シート共通 ===== */
+function openSheet(html){
+  document.getElementById("sheetIn").innerHTML = `<div class="grip"></div>` + html;
+  const s = document.getElementById("sheet");
+  s.classList.add("show");
+  s.onclick = e => { if(e.target === s) closeSheet(); };
+}
+function closeSheet(){ document.getElementById("sheet").classList.remove("show"); }
+
+/* ================= カレンダー ================= */
+function renderCal(){
+  const firstWd = new Date(YEAR,MONTH,1).getDay();
+  const td = todayDate();
+  let html = `<div class="mon-nav">
+      <button onclick="changeMonth(-1)">‹</button>
+      <select id="monthSelect" onchange="jumpMonth(this.value)"></select>
+      <button onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="cal-wrap"><div class="cal-grid">`;
+  WD.forEach((w,i)=> html += `<div class="cal-head ${i===0?'sun':(i===6?'sat':'')}">${w}</div>`);
+  for(let i=0;i<firstWd;i++) html += `<div class="cal-cell empty"></div>`;
+
+  for(let d=1; d<=DAYS_IN_MONTH; d++){
+    const ds = dateStr(d);
+    const evs = [];
+    members.forEach(m=> eventsOf(m.id, d, ds).forEach(t=>evs.push({t,m})));
+    const expanded = calExpanded.has(d);
+    const shown = expanded ? evs : evs.slice(0,3);
+    let chips = shown.map(e=>{
+      const c = e.m.id==="kyosuke" ? "var(--c-me)" : e.m.id==="mother" ? "var(--c-mom)" : "var(--c-sis)";
+      const tm = e.t.start_time ? e.t.start_time.slice(0,5)+" " : "";
+      return `<div class="ev-chip ${isDone(e.t)?'done':''}" style="--c:${c}">${esc(tm+e.t.text)}</div>`;
+    }).join("");
+    if(evs.length>3) chips += `<div class="ev-more" onclick="toggleEv(event,${d})">${expanded?'とじる':'+'+(evs.length-3)}</div>`;
+
+    let dots = "", cTot=0, cDone=0;
+    members.forEach(m=>{
+      const dt = tasksForDs(m.id, ds);
+      cTot += dt.length; cDone += dt.filter(isDone).length;
+      const rem = dt.filter(t=>!isDone(t)).length;
+      const c = m.id==="kyosuke" ? "var(--c-me)" : m.id==="mother" ? "var(--c-mom)" : "var(--c-sis)";
+      const cls = dt.length===0 ? "off" : (rem===0 ? "ok" : "");
+      const val = dt.length===0 ? "–" : (rem===0 ? "✓" : rem);
+      dots += `<span class="md"><i style="background:${c}"></i><b class="${cls}">${val}</b></span>`;
+    });
+    const cleared = cTot>0 && cTot===cDone;
+
+    html += `<div class="cal-cell ${d===td?'today':''} ${calSelectedDay===d?'sel':''} ${cleared?'cleared':''}"
+      onclick="selectCalDay(${d})">
+      <div class="cell-top"><span class="cd">${d}</span><span class="cell-dots">${dots}</span></div>
+      <div class="ev-list">${chips}</div>
+    </div>`;
+  }
+  html += `</div><div class="cal-legend">` +
+    members.map(m=>`<span><img src="${IMG[m.id]}" class="legend-face">${esc(m.name)}</span>`).join("") +
+    `<span>すうじ＝のこり</span></div></div>`;
+
+  document.getElementById("app").innerHTML = html;
+  buildMonthOptions();
+}
+function selectCalDay(d){
+  calSelectedDay = d;
+  const ds = dateStr(d);
+  const wd = WD[new Date(YEAR,MONTH,d).getDay()];
+  let blocks = "", tot=0, dn=0;
+  members.forEach(m=>{
+    const dt = tasksForDs(m.id, ds).slice().sort(sortByTime);
+    tot += dt.length; dn += dt.filter(isDone).length;
+    const rows = dt.length===0 ? `<div class="col-empty" style="padding:8px">よてい なし</div>`
+      : dt.map(t=>cardHtml(t,m)).join("");
+    blocks += `<div style="margin-top:14px">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px">
+        <img src="${IMG[m.id]}" class="member-face">
+        <b style="font-size:15px">${esc(m.name)}</b>
+        <span style="margin-left:auto;font-size:12px;font-weight:900;color:var(--sub)">
+          ${dt.filter(isDone).length}/${dt.length}</span>
+      </div>${rows}</div>`;
+  });
+  openSheet(`
+    <div class="det-t">${MONTH+1}月${d}日（${wd}）</div>
+    <div class="det-s">かぞく ぜんぶで ${dn}/${tot} おわり</div>
+    ${blocks}
+    <button class="sh-btn sub" onclick="closeSheet()">とじる</button>`);
+  render();
+}
+function toggleEv(e,d){
+  e.stopPropagation();
+  if(calExpanded.has(d)) calExpanded.delete(d); else calExpanded.add(d);
+  renderCal();
+}
+function buildMonthOptions(){
+  const sel = document.getElementById("monthSelect");
+  if(!sel) return;
+  let html = "";
+  const base = new Date(today.getFullYear(), today.getMonth(), 1);
+  for(let i=-12;i<=12;i++){
+    const dt = new Date(base.getFullYear(), base.getMonth()+i, 1);
+    html += `<option value="${dt.getFullYear()}-${dt.getMonth()}">${dt.getFullYear()}年${dt.getMonth()+1}月</option>`;
+  }
+  sel.innerHTML = html;
+  sel.value = YEAR+"-"+MONTH;
+}
+async function changeMonth(diff){
+  const dt = new Date(YEAR, MONTH+diff, 1);
+  YEAR = dt.getFullYear(); MONTH = dt.getMonth();
+  refreshMonthVars(); calSelectedDay = null; calExpanded.clear();
+  await loadMonth();
+}
+async function jumpMonth(v){
+  const [y,m] = v.split("-").map(Number);
+  YEAR=y; MONTH=m; refreshMonthVars(); calSelectedDay=null; calExpanded.clear();
+  await loadMonth();
+}
+
+/* ================= じぶん（数字） ================= */
+function daysLeft(){
+  if(isCurrentMonth()) return DAYS_IN_MONTH - today.getDate() + 1;
+  const cur = new Date(today.getFullYear(), today.getMonth(), 1);
+  return new Date(YEAR,MONTH,1) > cur ? DAYS_IN_MONTH : 0;
+}
+function perDay(remain, left){
+  if(remain<=0) return 0;
+  if(left<=0) return remain;
+  return Math.ceil(remain/left);
+}
+function renderMine(){
+  const g = GOALS.kyosuke;
+  let uber=0,self=0,team=0;
+  records.filter(r=>r.member_id==="kyosuke" &&
+      r.record_date.startsWith(`${YEAR}-${String(MONTH+1).padStart(2,"0")}`))
+    .forEach(r=>{ uber+=r.uber_sales; self+=r.eigyou_self; team+=r.eigyou_team; });
+  const ey = self*EIGYOU_SELF_YEN + team*EIGYOU_TEAM_YEN;
+  const goalAll = g.uber+g.eigyou, actAll = uber+ey;
+  const left = daysLeft();
+  const pct = goalAll ? Math.min(Math.round(actAll/goalAll*100),100) : 0;
+  const remain = Math.max(goalAll-actAll,0);
+  const msg = remain===0 ? "今月の目標達成！"
+    : (left<=0 ? `この月は終了（未達 ¥${remain.toLocaleString()}）`
+               : `残り${left}日 → 1日 <b>¥${perDay(remain,left).toLocaleString()}</b>`);
+
+  const td = todayDate();
+  const ds = td>0 ? dateStr(td) : fmt(boardDate());
+  const rec = getRecordDs("kyosuke", ds);
+  const dayYen = rec.uber_sales + rec.eigyou_self*EIGYOU_SELF_YEN + rec.eigyou_team*EIGYOU_TEAM_YEN;
+
+  let html = `
+  <div class="mine-sec">
+    <div class="mine-ttl">📈 今月の売上 <small>${YEAR}年${MONTH+1}月・${pct}%</small></div>
+    <div class="pace-box">
+      <div class="pace-msg">${msg}</div>
+      <div class="pace-bar"><div class="pace-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="goal-strip">
+      <div class="goal-card uber"><div class="label">Uber</div>
+        <div class="value">¥${g.uber.toLocaleString()}</div>
+        <div class="sub">実績 ¥${uber.toLocaleString()}</div>
+        ${remainHtml(g.uber,uber)}
+        <div class="sub pace">1日 ¥${perDay(g.uber-uber,left).toLocaleString()}</div></div>
+      <div class="goal-card eigyou"><div class="label">営業代行</div>
+        <div class="value">¥${g.eigyou.toLocaleString()}</div>
+        <div class="sub">${self+team}件・¥${ey.toLocaleString()}</div>
+        ${remainHtml(g.eigyou,ey)}
+        <div class="sub pace">1日 ¥${perDay(g.eigyou-ey,left).toLocaleString()}</div></div>
+      <div class="goal-card total"><div class="label">合計</div>
+        <div class="value">¥${goalAll.toLocaleString()}</div>
+        <div class="sub">実績 ¥${actAll.toLocaleString()}</div>
+        ${remainHtml(goalAll,actAll)}
+        <div class="sub pace">1日 ¥${perDay(remain,left).toLocaleString()}</div></div>
+    </div>
+  </div>
+
+  <div class="mine-sec">
+    <div class="mine-ttl">✍️ ${ds.slice(5).replace("-","/")} の記録</div>
+    <div class="rec-row">
+      <label class="rec-lbl">Uber 売上（円）</label>
+      <input type="number" inputmode="numeric" class="rec-in" value="${rec.uber_sales||''}"
+        placeholder="例：5000" onchange="saveRecord('${ds}','uber_sales',this.value)">
+    </div>
+    <div class="rec-row two">
+      <div><label class="rec-lbl">自分の成約</label>
+        <input type="number" inputmode="numeric" class="rec-in" value="${rec.eigyou_self||''}"
+          placeholder="0" onchange="saveRecord('${ds}','eigyou_self',this.value)"></div>
+      <div><label class="rec-lbl">下の人の成約</label>
+        <input type="number" inputmode="numeric" class="rec-in" value="${rec.eigyou_team||''}"
+          placeholder="0" onchange="saveRecord('${ds}','eigyou_team',this.value)"></div>
+    </div>
+    <div class="rec-hint">この日の合計：¥${dayYen.toLocaleString()}</div>
+    <div class="ramen-row ${rec.ramen_shift?'on':''}" onclick="toggleRamen('${ds}')">
+      <div class="ramen-ico">🍜</div>
+      <div class="ramen-txt">
+        <div class="ramen-t">この日は ラーメンバイト</div>
+        <div class="ramen-s">${rec.ramen_shift?"翌日の午前タスクはお休みになります":"入れると翌日の午前が休みになります"}</div>
+      </div>
+      <div class="ramen-sw ${rec.ramen_shift?'on':''}"><span></span></div>
+    </div>
+  </div>`;
+
+  // 家族の達成率
+  const mDone={}, mTot={};
+  members.forEach(m=>{ mDone[m.id]=0; mTot[m.id]=0; });
+  tasks.forEach(t=>{
+    if(!t.task_date.startsWith(`${YEAR}-${String(MONTH+1).padStart(2,"0")}`)) return;
+    if(mTot[t.member_id]===undefined) return;
+    mTot[t.member_id]++; if(isDone(t)) mDone[t.member_id]++;
+  });
+  const allDone = Object.values(mDone).reduce((a,b)=>a+b,0);
+  const allTot = Object.values(mTot).reduce((a,b)=>a+b,0);
+
+  html += `<div class="mine-sec">
+    <div class="mine-ttl">🏠 家族の達成 <small>今月</small></div>
+    <div class="stat-grid">
+      <div class="stat"><div class="l">家族のタスク完了</div><div class="v">${allDone} / ${allTot}</div></div>
+      <div class="stat"><div class="l">達成率</div>
+        <div class="v" style="color:var(--green)">${allTot?Math.round(allDone/allTot*100):0}%</div></div>
+    </div>
+    <div style="margin-top:14px">`;
+  members.forEach(m=>{
+    const c = m.id==="kyosuke" ? "var(--c-me)" : m.id==="mother" ? "var(--c-mom)" : "var(--c-sis)";
+    const p = mTot[m.id] ? Math.round(mDone[m.id]/mTot[m.id]*100) : 0;
+    html += `<div class="member-row">
+      <img src="${IMG[m.id]}" class="member-face" style="border-color:${c}">
+      <div class="member-name">${esc(m.name)}</div>
+      <div class="member-bar-wrap"><div class="member-bar" style="width:${p}%;background:${c}"></div></div>
+      <div class="member-val">${mDone[m.id]}/${mTot[m.id]}（${p}%）</div></div>`;
+  });
+  html += `</div></div>`;
+
+  // 日別売上グラフ
+  const dailyYen = [];
+  for(let d=1; d<=DAYS_IN_MONTH; d++){
+    const r = getRecordDs("kyosuke", dateStr(d));
+    dailyYen.push(r.uber_sales + r.eigyou_self*EIGYOU_SELF_YEN + r.eigyou_team*EIGYOU_TEAM_YEN);
+  }
+  const maxY = Math.max(...dailyYen,1);
+  html += `<div class="mine-sec">
+    <div class="mine-ttl">📊 日別 売上 <small>最大 ¥${maxY.toLocaleString()}</small></div>
+    <div class="bar-chart">`;
+  dailyYen.forEach((y,i)=>{
+    html += `<div class="bar-col"><div class="bar" style="height:${Math.round(y/maxY*100)}%;background:var(--accent)"></div>
+      <div class="bar-label">${i+1}</div></div>`;
+  });
+  html += `</div></div><div class="foot">この画面は自分用です</div>`;
+
+  document.getElementById("app").innerHTML = html;
+}
+function remainHtml(goal, actual){
+  const r = goal-actual;
+  return r<=0 ? `<div class="sub remain achieved">達成 +¥${Math.abs(r).toLocaleString()}</div>`
+              : `<div class="sub remain">残り ¥${r.toLocaleString()}</div>`;
+}
+async function saveRecord(ds, field, value){
+  const v = parseInt(value)||0;
+  let r = records.find(x=>x.member_id==="kyosuke" && x.record_date===ds);
+  if(!r){ r = {member_id:"kyosuke", record_date:ds, uber_sales:0, eigyou_self:0,
+    eigyou_team:0, ramen_shift:false}; records.push(r); }
+  r[field] = v;
+  renderMine();
+  await sb.from("daily_records").upsert({
+    member_id:"kyosuke", record_date:ds, uber_sales:r.uber_sales,
+    eigyou_self:r.eigyou_self, eigyou_team:r.eigyou_team, ramen_shift:!!r.ramen_shift
+  }, {onConflict:"member_id,record_date"});
+}
+async function toggleRamen(ds){
+  let r = records.find(x=>x.member_id==="kyosuke" && x.record_date===ds);
+  if(!r){ r = {member_id:"kyosuke", record_date:ds, uber_sales:0, eigyou_self:0,
+    eigyou_team:0, ramen_shift:false}; records.push(r); }
+  r.ramen_shift = !r.ramen_shift;
+  renderMine(); renderTop();
+  await sb.from("daily_records").upsert({
+    member_id:"kyosuke", record_date:ds, uber_sales:r.uber_sales,
+    eigyou_self:r.eigyou_self, eigyou_team:r.eigyou_team, ramen_shift:r.ramen_shift
+  }, {onConflict:"member_id,record_date"});
+}
+
+/* ================= お祝いポップアップ ================= */
+const HALF_MSG = ["半分きたよ！","いい調子！","折り返しだよ","もうちょっと！"];
 const HALF_SUB = [
   "ここまでよく頑張った。ラストスパートいこう。",
   "半分終わったよ。ひと息ついてから残りいこう。",
   "順調に進んでるね。あと少しだけ頑張ろう。",
   "ここまできたらもう勝ち。残りもいける。"
 ];
-const FULL_MSG = [
-  "今日もお疲れ様！",
-  "今日も頑張ったね！",
-  "今日も一日お疲れ様！",
-  "全部やりきったね！"
-];
+const FULL_MSG = ["今日もお疲れ様！","今日も頑張ったね！","今日も一日お疲れ様！","全部やりきったね！"];
 const FULL_SUB = [
   "今日のぶん、ぜんぶ終わったよ。ゆっくり休んで。",
   "きちんとやりきったね。今日はもう休んでいい日。",
@@ -1340,18 +1194,13 @@ const FULL_SUB = [
   "よく頑張りました。明日もいい一日になりますように。"
 ];
 const pick = a => a[Math.floor(Math.random()*a.length)];
-// 呼び方（誰に向けた言葉か）
-const CALL = { kyosuke:"享祐", sister:"りお", mother:"お母さん" };
-const callOf = id => CALL[id] || (members.find(m=>m.id===id)||{}).name || "";
-
-function showPop(kind, d){ showPopFor(kind, d, currentMember); }
 
 function showPopFor(kind, d, memberId){
   const isFull = kind === "full";
   const photo = isFull ? pick(FAMS) : pick(CATS);
-  const who   = callOf(memberId);
-  const title = isFull ? `${who}、${pick(FULL_MSG)}` : `${who}、${pick(HALF_MSG)}`;
-  const sub   = isFull ? pick(FULL_SUB) : pick(HALF_SUB);
+  const who = callOf(memberId);
+  const title = `${who}、${isFull ? pick(FULL_MSG) : pick(HALF_MSG)}`;
+  const sub = isFull ? pick(FULL_SUB) : pick(HALF_SUB);
   const badge = isFull ? `${who}・${MONTH+1}/${d} 完了` : `${who}・半分クリア`;
 
   const el = document.createElement("div");
@@ -1369,15 +1218,13 @@ function showPopFor(kind, d, memberId){
   document.body.appendChild(el);
   if(isFull) confetti(el);
   requestAnimationFrame(()=>el.classList.add("show"));
-
   const close = ()=>{ el.classList.remove("show"); setTimeout(()=>el.remove(), 460); };
   setTimeout(close, isFull ? 4800 : 4000);
   el.style.pointerEvents = "auto";
   el.addEventListener("click", close);
 }
-
 function confetti(host){
-  const colors = ["#2f8fd6","#35b98a","#f0a83c","#8a7fd4","#e2705f","#7fd0f5"];
+  const colors = ["#2f8fd6","#2eb489","#f0a83c","#8a6fd6","#e2705f","#7fd0f5"];
   for(let i=0;i<55;i++){
     const c = document.createElement("div");
     c.className = "conf";
@@ -1390,99 +1237,7 @@ function confetti(host){
   }
 }
 
-async function toggleSkip(id, d){
-  const t = tasks.find(x=>x.id===id);
-  if(!t) return;
-  const was = isDone(t);
-  t.skipped = !t.skipped;
-  if(t.skipped) t.done = false;
-  render(); renderMemberTabs();
-  await sb.from("tasks").update({skipped:t.skipped, done:t.done}).eq("id",id);
-
-  // お休みにしたことで全部片付いたらポップアップ
-  if(!was && t.skipped){
-    const ds = dateStr(d);
-    const after = visibleTasks(d, ds);
-    if(after.length>0 && after.every(isDone)) setTimeout(()=>showPop("full", d), 260);
-  }
-}
-
-async function delTask(id){
-  tasks = tasks.filter(x=>x.id!==id);
-  render(); renderMemberTabs();
-  await sb.from("tasks").delete().eq("id",id);
-}
-
-async function addTask(d){
-  const input = document.getElementById("new-"+d);
-  const cat = document.getElementById("cat-"+d).value;
-  const rep = document.getElementById("rep-"+d).value;
-  const text = input.value.trim();
-  if(!text) return;
-  const stEl = document.getElementById("st-"+d), etEl = document.getElementById("et-"+d);
-  const st = stEl && stEl.value ? stEl.value : null;
-  const et = etEl && etEl.value ? etEl.value : null;
-  input.value = "";
-  if(stEl) stEl.value = ""; if(etEl) etEl.value = "";
-  const days = repeatDays(d, rep);
-  const rows = days.map(day=>({member_id:currentMember, task_date:dateStr(day),
-    category:cat, text, sort_order:999, start_time:st, end_time:et, skipped:false}));
-  const { data, error } = await sb.from("tasks").insert(rows).select();
-  if(!error){
-    tasks = tasks.concat(data);
-    render(); renderMemberTabs();
-    if(rep!=="once") alert(`「${text}」を${days.length}日分に追加しました。`);
-  }
-}
-
-function repeatDays(start, rep){
-  if(rep==="once") return [start];
-  const twd = new Date(YEAR,MONTH,start).getDay();
-  const out = [];
-  for(let d=start; d<=DAYS_IN_MONTH; d++){
-    const wd = new Date(YEAR,MONTH,d).getDay();
-    if(rep==="daily") out.push(d);
-    else if(rep==="weekly" && wd===twd) out.push(d);
-    else if(rep==="weekday" && wd>=1 && wd<=5) out.push(d);
-  }
-  return out;
-}
-
-async function toggleRamen(ds, d){
-  let r = records.find(x=>x.member_id===currentMember && x.record_date===ds);
-  if(!r){
-    r = {member_id:currentMember, record_date:ds, uber_sales:0, eigyou_self:0,
-         eigyou_team:0, ramen_shift:false};
-    records.push(r);
-  }
-  r.ramen_shift = !r.ramen_shift;
-  render(); renderMemberTabs();
-  await sb.from("daily_records").upsert({
-    member_id:currentMember, record_date:ds,
-    uber_sales:r.uber_sales, eigyou_self:r.eigyou_self,
-    eigyou_team:r.eigyou_team, ramen_shift:r.ramen_shift
-  }, {onConflict:"member_id,record_date"});
-}
-
-async function saveRecord(ds, field, value){
-  const v = parseInt(value)||0;
-  let r = records.find(x=>x.member_id===currentMember && x.record_date===ds);
-  if(!r){
-    r = {member_id:currentMember, record_date:ds, uber_sales:0, eigyou_self:0,
-         eigyou_team:0, ramen_shift:false};
-    records.push(r);
-  }
-  r[field] = v;
-  render();
-  await sb.from("daily_records").upsert({
-    member_id:currentMember, record_date:ds,
-    uber_sales:r.uber_sales, eigyou_self:r.eigyou_self,
-    eigyou_team:r.eigyou_team, ramen_shift:!!r.ramen_shift
-  }, {onConflict:"member_id,record_date"});
-}
-
-
-// ===== おみくじ =====
+/* ================= おみくじ ================= */
 const LUCKS = [
   {name:"大吉", w:8,  word:"最高の一日になりそう。思い切って動いていい日。"},
   {name:"中吉", w:18, word:"流れは good。丁寧にいけば結果がついてくる。"},
@@ -1494,43 +1249,33 @@ const LUCKS = [
 const LUCKY_ITEMS = [
   "白いタオル","温かいお茶","青いペン","窓際の席","甘いもの","黒い靴下",
   "レモン","メモ帳","朝の散歩","炭酸水","丸いもの","赤い小物",
-  "コーヒー","ハンカチ","音楽","早起き","おにぎり","観葉植物",
-  "帽子","水色のもの","深呼吸","チョコ","時計","鏡を見ること",
-  "笑うこと","猫を撫でること","味噌汁","новый"
-].filter(x=>/^[ぁ-んァ-ヶ一-龥ー]/.test(x));
-
-// 日付＋メンバーで固定の運勢（同じ日は何度開いても同じ）
+  "コーヒー","ハンカチ","好きな音楽","早起き","おにぎり","観葉植物",
+  "帽子","水色のもの","深呼吸","チョコレート","時計","鏡を見ること",
+  "笑うこと","猫を撫でること","味噌汁","新しい靴下","日光を浴びること",
+  "アイスコーヒー","星の模様","バナナ"
+];
 function seedRand(str){
   let h = 2166136261;
-  for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h,16777619); }
   return ()=>{ h = Math.imul(h ^ (h>>>15), 2246822507); h ^= h>>>13; return ((h>>>0)%10000)/10000; };
 }
 function drawFortune(key){
   const r = seedRand(key);
   const total = LUCKS.reduce((a,b)=>a+b.w,0);
   let x = r()*total, luck = LUCKS[LUCKS.length-1];
-  for(const l of LUCKS){ if(x < l.w){ luck = l; break; } x -= l.w; }
-  const stars = () => 1 + Math.floor(r()*5);
-  return {
-    luck,
-    money: stars(),
-    work: stars(),
-    total: stars(),
-    item: LUCKY_ITEMS[Math.floor(r()*LUCKY_ITEMS.length)]
-  };
+  for(const l of LUCKS){ if(x<l.w){ luck=l; break; } x-=l.w; }
+  const st = ()=> 1 + Math.floor(r()*5);
+  return { luck, money:st(), work:st(), total:st(),
+    item: LUCKY_ITEMS[Math.floor(r()*LUCKY_ITEMS.length)] };
 }
 function starHtml(n){
-  let h="";
-  for(let i=1;i<=5;i++) h += `<span class="${i<=n?'omi-star-on':'omi-star-off'}">★</span>`;
+  let h=""; for(let i=1;i<=5;i++) h += `<span class="${i<=n?'omi-star-on':'omi-star-off'}">★</span>`;
   return h;
 }
-function omiKey(){
-  const t = new Date();
-  return `${t.getFullYear()}-${t.getMonth()+1}-${t.getDate()}`;
-}
+function omiKey(){ const t=new Date(); return `${t.getFullYear()}-${t.getMonth()+1}-${t.getDate()}`; }
 function maybeShowOmikuji(){
   const t = new Date();
-  if(t.getHours() < 7) return;                 // 朝7時より前は出さない
+  if(t.getHours() < 7) return;
   const key = "omikuji_" + omiKey();
   try{ if(localStorage.getItem(key)) return; }catch(e){ return; }
   showOmikuji(key);
@@ -1541,13 +1286,13 @@ function showOmikuji(key){
   el.className = "omi";
   el.innerHTML = `<div class="omi-card">
     <div class="omi-top">
-      <div class="omi-ttl">今日のおみくじ</div>
+      <div class="omi-ttl">きょうの おみくじ</div>
       <div class="omi-date">${t.getFullYear()}.${t.getMonth()+1}.${t.getDate()}</div>
     </div>
     <div class="omi-draw" id="omiDraw">
       <div class="omi-box"><span>🎴</span></div>
-      <div class="omi-lead">今日はどんな一日かな？<br>おみくじを引いてみよう</div>
-      <button class="omi-btn" onclick="doDraw('${key}')">引く</button>
+      <div class="omi-lead">きょうは どんな 一日かな？<br>おみくじを ひいてみよう</div>
+      <button class="omi-btn" onclick="doDraw('${key}')">ひく</button>
     </div>
   </div>`;
   document.body.appendChild(el);
@@ -1555,12 +1300,10 @@ function showOmikuji(key){
   requestAnimationFrame(()=>el.classList.add("show"));
 }
 function doDraw(key){
-  const el = window.__omiEl;
-  if(!el) return;
-  try{ localStorage.setItem(key, "1"); }catch(e){}
-  const f = drawFortune(key + "|" + currentMember);
-  const box = el.querySelector(".omi-card");
-  box.querySelector("#omiDraw").outerHTML = `
+  const el = window.__omiEl; if(!el) return;
+  try{ localStorage.setItem(key,"1"); }catch(e){}
+  const f = drawFortune(key);
+  el.querySelector("#omiDraw").outerHTML = `
     <div class="omi-res">
       <div class="omi-luck">${f.luck.name}</div>
       <div class="omi-word">${f.luck.word}</div>
@@ -1576,184 +1319,14 @@ function doDraw(key){
         <div class="omi-item-l">LUCKY ITEM</div>
         <div class="omi-item-v">${f.item}</div>
       </div>
-      <button class="omi-close" onclick="closeOmi()">閉じて今日をはじめる</button>
+      <button class="omi-close" onclick="closeOmi()">とじて きょうを はじめる</button>
     </div>`;
   if(f.luck.name === "大吉") confetti(el);
 }
 function closeOmi(){
-  const el = window.__omiEl;
-  if(!el) return;
+  const el = window.__omiEl; if(!el) return;
   el.classList.remove("show");
   setTimeout(()=>{ el.remove(); window.__omiEl = null; }, 420);
-}
-
-// ===== カレンダー =====
-function renderCalendar(){
-  const firstWd = new Date(YEAR,MONTH,1).getDay();
-  const td = todayDate();
-  let html = `<div class="cal-wrap"><div class="cal-grid">`;
-  WD.forEach((w,i)=>{
-    html += `<div class="cal-head ${i===0?'sun':(i===6?'sat':'')}">${w}</div>`;
-  });
-  for(let i=0;i<firstWd;i++) html += `<div class="cal-cell empty"></div>`;
-
-  for(let d=1; d<=DAYS_IN_MONTH; d++){
-    const ds = dateStr(d);
-
-    // 予定チップ（定型タスク以外）
-    const evs = [];
-    members.forEach(m=>{
-      eventsOf(m.id, d, ds).forEach(t=>evs.push({t, m}));
-    });
-    const expanded = calExpanded.has(d);
-    const shown = expanded ? evs : evs.slice(0,3);
-    let chips = shown.map(e=>{
-      const tm = e.t.start_time ? e.t.start_time.slice(0,5)+" " : "";
-      return `<div class="ev-chip ${e.t.done?'done':''}" style="--c:${e.m.color}">
-        <span>${esc(tm + e.t.text)}</span></div>`;
-    }).join("");
-    if(evs.length > 3){
-      chips += expanded
-        ? `<div class="ev-more" onclick="toggleEv(event,${d})">閉じる</div>`
-        : `<div class="ev-more" onclick="toggleEv(event,${d})">+${evs.length-3} もっと見る</div>`;
-    }
-
-    // 残り件数（小さく）
-    let dots = "";
-    members.forEach(m=>{
-      const dt = tasksFor(m.id, d, ds);
-      const rem = dt.filter(t=>!isDone(t)).length;
-      const cls = dt.length===0 ? "off" : (rem===0 ? "ok" : "");
-      const val = dt.length===0 ? "–" : (rem===0 ? "✓" : rem);
-      dots += `<span class="md"><i style="background:${m.color}"></i><b class="${cls}">${val}</b></span>`;
-    });
-
-    let cTot=0, cDone=0;
-    members.forEach(m=>{
-      const dt = tasksFor(m.id, d, ds);
-      cTot += dt.length; cDone += dt.filter(isDone).length;
-    });
-    const cleared = cTot>0 && cTot===cDone;
-    html += `<div class="cal-cell ${d===td?'today':''} ${calSelectedDay===d?'sel':''} ${cleared?'cleared':''}"
-      onclick="selectCalDay(${d})">
-      <div class="cell-top"><span class="cd">${d}</span><span class="cell-dots">${dots}</span></div>
-      <div class="ev-list">${chips}</div>
-    </div>`;
-  }
-  html += `</div><div class="cal-legend">` +
-    members.map(m=>`<span><img src="${IMG[m.id]}" class="legend-face" style="border-color:${m.color}">${m.name}</span>`).join("") +
-    `<span>色バー＝その人の予定／数字＝残り件数</span></div></div>`;
-
-  const sel = calSelectedDay || (td>0 ? td : 1);
-  html += renderCalDetail(sel);
-  document.getElementById("app").innerHTML = html;
-}
-
-function renderCalDetail(d){
-  const ds = dateStr(d);
-  const wd = WD[new Date(YEAR,MONTH,d).getDay()];
-  const dt = visibleTasks(d, ds);
-  const rec = getRecord(currentMember, ds);
-  const done = dt.filter(isDone).length;
-  const name = (members.find(m=>m.id===currentMember)||{}).name||"";
-
-  let html = `<div class="cal-detail">
-    <div class="cal-detail-title">${MONTH+1}月${d}日（${wd}）　${name}</div>
-    <div class="cal-detail-sub">${done}/${dt.length} 完了`;
-  if(hasMoney(currentMember)){
-    const yen = rec.uber_sales + rec.eigyou_self*EIGYOU_SELF_YEN + rec.eigyou_team*EIGYOU_TEAM_YEN;
-    html += ` ／ 売上 ¥${yen.toLocaleString()}`;
-  }
-  html += `</div>`;
-  html += renderRamenRow(d, ds, rec);
-  html += dt.length===0
-    ? `<div style="color:var(--sub);font-size:13px;padding:6px 0;">タスクはまだありません。</div>`
-    : renderDayTasks(d, ds, dt, rec);
-  html += renderAddRow(d) + `</div>`;
-  return html;
-}
-
-function selectCalDay(d){ calSelectedDay = d; renderCalendar(); }
-function toggleEv(e, d){
-  e.stopPropagation();
-  if(calExpanded.has(d)) calExpanded.delete(d); else calExpanded.add(d);
-  renderCalendar();
-}
-
-// ===== 可視化 =====
-function renderViz(){
-  const memberYen={}, memberDone={}, memberTotal={};
-  members.forEach(m=>{ memberYen[m.id]=0; memberDone[m.id]=0; memberTotal[m.id]=0; });
-  let totalYen = 0;
-  records.forEach(r=>{
-    if(!hasMoney(r.member_id)) return;
-    const y = r.uber_sales + r.eigyou_self*EIGYOU_SELF_YEN + r.eigyou_team*EIGYOU_TEAM_YEN;
-    memberYen[r.member_id] += y; totalYen += y;
-  });
-  tasks.forEach(t=>{
-    if(memberTotal[t.member_id]===undefined) return;
-    memberTotal[t.member_id]++;
-    if(isDone(t)) memberDone[t.member_id]++;
-  });
-
-  const goalTotal = GOALS.kyosuke.uber + GOALS.kyosuke.eigyou;
-  const allDone = Object.values(memberDone).reduce((a,b)=>a+b,0);
-  const allTotal = Object.values(memberTotal).reduce((a,b)=>a+b,0);
-
-  const dailyYen=[], dailyDone=[];
-  for(let d=1; d<=DAYS_IN_MONTH; d++){
-    const ds = dateStr(d);
-    const r = getRecord("kyosuke", ds);
-    dailyYen.push(r.uber_sales + r.eigyou_self*EIGYOU_SELF_YEN + r.eigyou_team*EIGYOU_TEAM_YEN);
-    dailyDone.push(tasks.filter(t=>t.task_date===ds && isDone(t)).length);
-  }
-  const maxYen = Math.max(...dailyYen,1), maxDone = Math.max(...dailyDone,1);
-
-  let html = `<div class="viz-section">
-    <div class="viz-title">月間サマリー<span class="viz-sub">${YEAR}年${MONTH+1}月</span></div>
-    <div class="stat-grid">
-      <div class="stat"><div class="l">売上合計（享祐）</div>
-        <div class="v" style="color:var(--gold)">¥${totalYen.toLocaleString()}</div></div>
-      <div class="stat"><div class="l">目標まで残り</div>
-        <div class="v" style="color:${totalYen>=goalTotal?'var(--green)':'var(--red)'}">
-        ${totalYen>=goalTotal?'達成':'¥'+(goalTotal-totalYen).toLocaleString()}</div></div>
-      <div class="stat"><div class="l">タスク完了（家族全体）</div>
-        <div class="v">${allDone} / ${allTotal}</div></div>
-      <div class="stat"><div class="l">達成率</div>
-        <div class="v" style="color:var(--green)">${allTotal?Math.round(allDone/allTotal*100):0}%</div></div>
-    </div></div>`;
-
-  html += `<div class="viz-section"><div class="viz-title">メンバー別 タスク達成率</div>`;
-  members.forEach(m=>{
-    const tot = memberTotal[m.id], dn = memberDone[m.id];
-    const pct = tot ? Math.round(dn/tot*100) : 0;
-    html += `<div class="member-row">
-      <img src="${IMG[m.id]}" class="member-face" style="border-color:${m.color}">
-      <div class="member-name">${m.name}</div>
-      <div class="member-bar-wrap"><div class="member-bar" style="width:${pct}%;background:${m.color}"></div></div>
-      <div class="member-val">${dn}/${tot}（${pct}%）</div></div>`;
-  });
-  html += `</div>`;
-
-  html += `<div class="viz-section">
-    <div class="viz-title">日別 売上<span class="viz-sub">享祐・最大 ¥${maxYen.toLocaleString()}</span></div>
-    <div class="bar-chart">`;
-  dailyYen.forEach((y,i)=>{
-    html += `<div class="bar-col"><div class="bar" style="height:${Math.round(y/maxYen*100)}%;background:var(--gold)"></div>
-      <div class="bar-label">${i+1}</div></div>`;
-  });
-  html += `</div></div>`;
-
-  html += `<div class="viz-section">
-    <div class="viz-title">日別 タスク完了数<span class="viz-sub">家族全体・最大 ${maxDone}件</span></div>
-    <div class="bar-chart">`;
-  dailyDone.forEach((c,i)=>{
-    html += `<div class="bar-col"><div class="bar" style="height:${Math.round(c/maxDone*100)}%;background:var(--green)"></div>
-      <div class="bar-label">${i+1}</div></div>`;
-  });
-  html += `</div></div>`;
-
-  document.getElementById("app").innerHTML = html;
 }
 
 init();
