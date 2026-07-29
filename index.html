@@ -840,7 +840,7 @@ function openDetail(id){
         ${t.skipped ? "↩︎ お休みを解除" : "☕️ 今日はやらない"}
       </button>
       <button class="det-b edit" onclick="openEdit('${id}')">✏️ 内容・時間を変える</button>
-      <button class="det-b del" onclick="actDel('${id}')">この予定を削除</button>
+      <button class="det-b del" onclick="askDel('${id}')">🗑 この予定を削除</button>
       <button class="sh-btn sub" onclick="closeSheet()">閉じる</button>
     </div>`);
 }
@@ -861,6 +861,58 @@ async function actSkip(id){
   await sb.from("tasks").update({done:t.done, skipped:t.skipped}).eq("id",id);
   if(t.skipped) celebCheck(t, "after", before);
 }
+async function askDel(id){
+  const t = tasks.find(x=>x.id===id); if(!t) return;
+  if((t.sort_order||0) < 900){ actDel(id); return; }  // 定型タスクは単独削除
+
+  const { data } = await sb.from("tasks").select("id,task_date")
+    .eq("member_id", t.member_id).eq("text", t.text).gte("sort_order", 900);
+  const same = data || [];
+  const future = same.filter(x=>x.task_date >= t.task_date);
+  const d = new Date(t.task_date+"T00:00:00");
+
+  if(same.length <= 1){ actDel(id); return; }
+
+  openSheet(`
+    <button class="sh-back" onclick="openDetail('${id}')">‹ 戻る</button>
+    <div class="sh-q">「${esc(t.text)}」を削除</div>
+    <div class="det-s">同じ予定が ${same.length}日分 入っています</div>
+    <div class="det-btns">
+      <button class="det-b undone" onclick="actDel('${id}')">
+        この日だけ削除（${d.getMonth()+1}/${d.getDate()}）
+      </button>
+      <button class="det-b rest" onclick="delBulk('${id}','future')">
+        この日以降を全部削除（${future.length}日分）
+      </button>
+      <button class="det-b del" style="background:#fdecea;border:2px solid #f5c6c0"
+        onclick="delBulk('${id}','all')">
+        すべて削除（${same.length}日分）
+      </button>
+      <button class="sh-btn sub" onclick="openDetail('${id}')">キャンセル</button>
+    </div>`);
+}
+
+async function delBulk(id, mode){
+  const t = tasks.find(x=>x.id===id); if(!t) return;
+
+  // 画面に出ていない月のぶんも含めて、DBから対象を数える
+  let q = sb.from("tasks").select("id")
+    .eq("member_id", t.member_id).eq("text", t.text).gte("sort_order", 900);
+  if(mode === "future") q = q.gte("task_date", t.task_date);
+  const { data, error } = await q;
+  if(error){ alert("削除できませんでした"); return; }
+  const ids = (data||[]).map(x=>x.id);
+  if(!ids.length) return;
+  if(!confirm(`${ids.length}日分の「${t.text}」を削除します。よろしいですか？`)) return;
+
+  tasks = tasks.filter(x=>!ids.includes(x.id));
+  closeSheet(); renderTop(); render();
+  for(let i=0;i<ids.length;i+=100){
+    await sb.from("tasks").delete().in("id", ids.slice(i,i+100));
+  }
+  alert(`${ids.length}日分を削除しました`);
+}
+
 async function actDel(id){
   const t = tasks.find(x=>x.id===id); if(!t) return;
   tasks = tasks.filter(x=>x.id!==id);
