@@ -259,6 +259,8 @@
   .det-b.done{background:var(--green); color:#fff; box-shadow:0 8px 20px rgba(46,180,137,.35);}
   .det-b.undone{background:var(--panel2); color:var(--ink2); border:2px solid var(--line);}
   .det-b.rest{background:var(--orange-soft); color:#b8722c; border:2px solid #f6d6ac;}
+  .det-b.edit{background:var(--accent-soft); color:var(--accent-dark);
+    border:2px solid #cbe4f8;}
   .det-b.del{background:none; color:var(--red); font-size:14.5px; padding:12px;}
   .det-b:active{transform:scale(.97);}
 
@@ -837,6 +839,7 @@ function openDetail(id){
       <button class="det-b rest" onclick="actSkip('${id}')">
         ${t.skipped ? "↩︎ お休みを解除" : "☕️ 今日はやらない"}
       </button>
+      <button class="det-b edit" onclick="openEdit('${id}')">✏️ 内容・時間を変える</button>
       <button class="det-b del" onclick="actDel('${id}')">この予定を削除</button>
       <button class="sh-btn sub" onclick="closeSheet()">閉じる</button>
     </div>`);
@@ -877,6 +880,90 @@ function celebCheck(t, phase, before){
   if(done === total) setTimeout(()=>showPopFor("full", d, t.member_id), 240);
   else if(before && before.done < half && done >= half)
     setTimeout(()=>showPopFor("half", d, t.member_id), 240);
+}
+
+/* ================= 予定を編集する ================= */
+function openEdit(id){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  const m = members.find(x=>x.id===t.member_id) || {};
+  const d = new Date(t.task_date+"T00:00:00");
+
+  openSheet(`
+    <button class="sh-back" onclick="openDetail('${id}')">‹ 戻る</button>
+    <div class="sh-step">へんしゅう</div>
+    <div class="sh-q">予定を変える</div>
+
+    <div class="sh-lbl">だれの予定</div>
+    <div class="pick-fam" style="margin-bottom:16px">
+      ${members.map(x=>`
+        <button class="${x.id===t.member_id?'on':''}" onclick="editSet('${id}','member_id','${x.id}')">
+          <img src="${IMG[x.id]}" alt=""><span>${esc(x.name)}</span>
+        </button>`).join("")}
+    </div>
+
+    <div class="sh-lbl">内容</div>
+    <input class="sh-input" id="edText" value="${esc(t.text)}">
+
+    <div class="sh-lbl">日付</div>
+    <div class="datenav" style="margin-bottom:14px">
+      <button onclick="editShiftDate('${id}',-1)">‹</button>
+      <label class="datebox">
+        <span>${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）</span>
+        <input type="date" value="${t.task_date}" onchange="editSet('${id}','task_date',this.value)">
+      </label>
+      <button onclick="editShiftDate('${id}',1)">›</button>
+    </div>
+
+    <div class="sh-lbl">時間（空にすると時間なし）</div>
+    <div class="sh-row">
+      <input type="time" class="sh-input" id="edSt" value="${t.start_time?t.start_time.slice(0,5):''}">
+      <span style="font-weight:900;color:var(--sub)">〜</span>
+      <input type="time" class="sh-input" id="edEt" value="${t.end_time?t.end_time.slice(0,5):''}">
+    </div>
+
+    <button class="sh-btn" onclick="saveEdit('${id}')">この内容で保存 ✓</button>
+    <button class="sh-btn sub" onclick="openDetail('${id}')">やめる</button>`);
+}
+
+async function editSet(id, field, value){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  // 入力中の内容を保持したまま切り替える
+  const tx = document.getElementById("edText");
+  if(tx) t.text = tx.value.trim() || t.text;
+  const st = document.getElementById("edSt"), et = document.getElementById("edEt");
+  if(st) t.start_time = st.value || null;
+  if(et) t.end_time = et.value || null;
+
+  t[field] = value;
+  openEdit(id);
+  await sb.from("tasks").update({[field]:value}).eq("id",id);
+  renderTop(); render();
+}
+
+function editShiftDate(id, diff){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  const d = new Date(t.task_date+"T00:00:00");
+  d.setDate(d.getDate()+diff);
+  editSet(id, "task_date", fmt(d));
+}
+
+async function saveEdit(id){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  const text = (document.getElementById("edText").value || "").trim();
+  if(!text){ alert("内容を入力してください"); return; }
+  const st = document.getElementById("edSt").value || null;
+  const et = document.getElementById("edEt").value || null;
+
+  t.text = text; t.start_time = st; t.end_time = et;
+  closeSheet(); renderTop(); render();
+  await sb.from("tasks").update({
+    text:t.text, start_time:t.start_time, end_time:t.end_time,
+    member_id:t.member_id, task_date:t.task_date
+  }).eq("id",id);
 }
 
 /* ================= 予定をいれる ================= */
