@@ -46,6 +46,15 @@
     font-weight:700; margin-top:7px; letter-spacing:.03em;
   }
 
+  .reload-b{
+    background:var(--panel2); border:2px solid var(--line); color:var(--accent);
+    width:40px; height:40px; border-radius:50%; font-size:20px; font-weight:900;
+    flex-shrink:0;
+  }
+  .reload-b:active{transform:scale(.9);}
+  .reload-b.spin{animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
   /* ========== 上部 ========== */
   .topbar{
     background:var(--panel); border-bottom:1px solid var(--line);
@@ -232,6 +241,22 @@
     border-radius:14px; padding:15px 15px; font-size:17px; font-weight:700;
     color:var(--ink); margin-bottom:14px;
   }
+  .tp{background:var(--panel2); border:2px solid var(--line); border-radius:14px;
+    padding:11px; margin-bottom:12px;}
+  .tp-l{font-size:12.5px; font-weight:900; color:var(--sub); margin-bottom:8px;
+    display:flex; align-items:center; gap:8px;}
+  .tp-l b{font-size:17px; color:var(--accent-dark);}
+  .tp-clr{margin-left:auto; background:#fff; border:1.5px solid var(--line);
+    border-radius:8px; padding:4px 11px; font-size:11.5px; font-weight:800;
+    color:var(--sub);}
+  .tp-h{display:grid; grid-template-columns:repeat(6,1fr); gap:5px;}
+  .tp-m{display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin-top:7px;
+    padding-top:8px; border-top:1px solid var(--line);}
+  .tp-b{background:#fff; border:2px solid var(--line); border-radius:10px;
+    padding:11px 0; font-size:15px; font-weight:900; color:var(--ink2);}
+  .tp-b:active{transform:scale(.93);}
+  .tp-b.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .tp-b.m{font-size:13.5px;}
   .sh-row{display:flex; gap:10px; align-items:center; margin-bottom:14px;}
   .sh-row .sh-input{margin:0;}
   .sh-lbl{font-size:13px; font-weight:900; color:var(--sub); margin:0 0 8px;}
@@ -376,6 +401,19 @@
     color:var(--ink); cursor:pointer;
   }
   .datebox input{position:absolute; inset:0; opacity:0; width:100%; height:100%;}
+  .bulk-row{display:flex; align-items:center; gap:11px; padding:11px 2px;
+    border-bottom:1px solid var(--line2);}
+  .bulk-row:last-child{border-bottom:none;}
+  .bulk-face{width:34px; height:34px; border-radius:50%; object-fit:cover;
+    border:2px solid var(--line); flex-shrink:0;}
+  .bulk-info{flex:1; min-width:0;}
+  .bulk-t{font-size:14.5px; font-weight:900; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap;}
+  .bulk-s{font-size:11.5px; color:var(--sub); font-weight:700; margin-top:2px;}
+  .bulk-del{background:#fdecea; border:2px solid #f5c6c0; color:var(--red);
+    border-radius:10px; padding:9px 15px; font-size:13.5px; font-weight:900;
+    flex-shrink:0;}
+  .bulk-del:active{transform:scale(.94);}
   .rec-hint{font-size:12px; color:var(--sub); margin-top:8px; font-weight:700;}
   .ramen-row{display:flex; align-items:center; gap:12px; background:var(--panel2);
     border:2px solid var(--line); border-radius:var(--r2); padding:14px; margin-top:12px;}
@@ -546,7 +584,10 @@
 <div class="topbar"><div class="wrap">
   <div class="top-in">
     <div class="today-str" id="todayStr"></div>
-    <div class="top-fam" id="topFam"></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="reload-b" id="reloadB" onclick="doReload()">⟳</button>
+      <div class="top-fam" id="topFam"></div>
+    </div>
   </div>
   <div class="daysw" id="daySw"></div>
 </div></div>
@@ -744,6 +785,18 @@ function renderTop(){
     <button class="${boardOffset===0?'on':''}" onclick="setDay(0)">今日<small>${c(t0)}</small></button>
     <button class="${boardOffset===1?'on':''}" onclick="setDay(1)">明日<small>${c(t1)}</small></button>`;
 }
+async function doReload(){
+  const b = document.getElementById("reloadB");
+  if(b) b.classList.add("spin");
+  await loadMonth();
+  if(b) b.classList.remove("spin");
+}
+
+// 画面を開き直した時・下に引っぱった時にも最新にする
+document.addEventListener("visibilitychange", ()=>{
+  if(!document.hidden && members.length) loadMonth();
+});
+
 function setDay(o){ boardOffset = o; renderTop(); render(); }
 
 function go(v){
@@ -950,6 +1003,28 @@ function celebCheck(t, phase, before){
     setTimeout(()=>showPopFor("half", d, t.member_id), 240);
 }
 
+
+// 時刻のかんたん選択
+const HOURS = [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23];
+const MINS  = ["00","15","30","45"];
+
+function timePad(cur, onPick, label){
+  const h = cur ? Number(cur.slice(0,2)) : null;
+  const mi = cur ? cur.slice(3,5) : null;
+  return `<div class="tp">
+    <div class="tp-l">${label}${cur?`<b>${cur}</b>`:""}
+      ${cur?`<button class="tp-clr" onclick="${onPick}(null)">消す</button>`:""}</div>
+    <div class="tp-h">
+      ${HOURS.map(x=>`<button class="tp-b ${h===x?'on':''}"
+        onclick="${onPick}('${String(x).padStart(2,'0')}:${mi||'00'}')">${x}</button>`).join("")}
+    </div>
+    ${h!==null?`<div class="tp-m">
+      ${MINS.map(x=>`<button class="tp-b m ${mi===x?'on':''}"
+        onclick="${onPick}('${String(h).padStart(2,'0')}:${x}')">${x}分</button>`).join("")}
+    </div>`:""}
+  </div>`;
+}
+
 /* ================= 予定を編集する ================= */
 let editState = null;
 
@@ -1022,15 +1097,8 @@ function editDraw(){
         onclick="edSlot('${x.k}')">${x.ico} ${x.label}</button>`).join("")}
     </div>
     <div class="sh-lbl">時間を指定する（任意）</div>
-    <div class="sh-row">
-      <input type="time" class="sh-input" id="edSt" value="${e.st||''}" onchange="edTime()">
-      <span style="font-weight:900;color:var(--sub)">〜</span>
-      <input type="time" class="sh-input" id="edEt" value="${e.et||''}" onchange="edTime()">
-    </div>
-    ${e.st ? `<div class="rec-hint" style="margin:-8px 0 14px">
-      ${e.st}${e.et?" 〜 "+e.et:""} で保存します
-      <button class="chip" style="padding:5px 12px;margin-left:8px"
-        onclick="edClearTime()">時間を消す</button></div>` : ""}
+    ${timePad(e.st, "edSetSt", "開始 ")}
+    ${e.st ? timePad(e.et, "edSetEt", "終了 ") : ""}
 
     <div class="sh-lbl">この日だけ / 連日</div>
     <div class="chips">
@@ -1244,17 +1312,8 @@ function stepWhen(){
         onclick="pickSlot('${s.k}')">${s.ico} ${s.label}</button>`).join("")}
     </div>
     <div class="sh-lbl">時間を指定する（任意）</div>
-    <div class="sh-row">
-      <input type="time" class="sh-input" id="stIn" value="${addState.st||''}"
-        onchange="setTime()">
-      <span style="font-weight:900;color:var(--sub)">〜</span>
-      <input type="time" class="sh-input" id="etIn" value="${addState.et||''}"
-        onchange="setTime()">
-    </div>
-    ${addState.st ? `<div class="rec-hint" style="margin:-8px 0 14px">
-      ${addState.st}${addState.et?" 〜 "+addState.et:""} で登録します
-      <button class="chip" style="padding:5px 12px;margin-left:8px"
-        onclick="clearTime()">時間を消す</button></div>` : ""}
+    ${timePad(addState.st, "setSt", "開始 ")}
+    ${addState.st ? timePad(addState.et, "setEt", "終了 ") : ""}
     <div class="sh-lbl">この日だけ / 連日</div>
     <div class="chips">
       <button class="chip big ${addState.repeat==='once'?'on':''}" onclick="pickRep('once')">この日だけ</button>
@@ -1303,14 +1362,13 @@ function stepWhen(){
 }
 function pickDate(ds){ addState.date = ds; stepWhen(); }
 function pickSlot(k){ addState.slot = k; addState.st = null; addState.et = null; stepWhen(); }
-function setTime(){
-  const a = document.getElementById("stIn").value || null;
-  const b = document.getElementById("etIn").value || null;
-  addState.st = a; addState.et = b;
-  if(a) addState.slot = null;
+function setSt(v){
+  addState.st = v;
+  if(!v) addState.et = null;
+  if(v) addState.slot = null;
   stepWhen();
 }
-function clearTime(){ addState.st = null; addState.et = null; stepWhen(); }
+function setEt(v){ addState.et = v; stepWhen(); }
 function pickRep(r){
   addState.repeat = r;
   if(r !== "range") addState.until = null;
@@ -1610,6 +1668,11 @@ function renderMine(){
   </div>
 
   <div class="mine-sec">
+    <div class="mine-ttl">🗑 予定をまとめて削除 <small>くり返しの整理</small></div>
+    <div id="bulkList"><div class="rec-hint">読み込み中…</div></div>
+  </div>
+
+  <div class="mine-sec">
     <div class="mine-ttl">✍️ 売上を記録する</div>
     <div class="rec-row">
       <label class="rec-lbl">記録する日</label>
@@ -1695,6 +1758,7 @@ function renderMine(){
   html += `</div></div><div class="foot">この画面は自分用です</div>`;
 
   document.getElementById("app").innerHTML = html;
+  loadBulkList();
 }
 function remainHtml(goal, actual){
   const r = goal-actual;
@@ -1716,6 +1780,54 @@ function shiftRec(diff){
   const d = new Date(recDate+"T00:00:00");
   d.setDate(d.getDate()+diff);
   setRecDate(fmt(d));
+}
+
+// 繰り返し予定の一覧を出して、種類ごとに一括削除
+async function loadBulkList(){
+  const el = document.getElementById("bulkList");
+  if(!el) return;
+  const { data, error } = await sb.from("tasks")
+    .select("member_id,text,task_date").gte("sort_order", 900);
+  if(error){ el.innerHTML = `<div class="rec-hint">読み込めませんでした</div>`; return; }
+
+  const map = {};
+  (data||[]).forEach(t=>{
+    const k = t.member_id + "\u0000" + t.text;
+    if(!map[k]) map[k] = {member_id:t.member_id, text:t.text, n:0, from:t.task_date, to:t.task_date};
+    map[k].n++;
+    if(t.task_date < map[k].from) map[k].from = t.task_date;
+    if(t.task_date > map[k].to)   map[k].to   = t.task_date;
+  });
+  const list = Object.values(map).filter(x=>x.n >= 2).sort((a,b)=>b.n-a.n);
+  if(!list.length){
+    el.innerHTML = `<div class="rec-hint">くり返しの予定はありません</div>`;
+    return;
+  }
+  el.innerHTML = list.map(x=>{
+    const m = members.find(y=>y.id===x.member_id) || {};
+    return `<div class="bulk-row">
+      <img src="${IMG[x.member_id]}" class="bulk-face">
+      <div class="bulk-info">
+        <div class="bulk-t">${esc(x.text)}</div>
+        <div class="bulk-s">${esc(m.name||"")}・${x.n}日分（${x.from.slice(5).replace("-","/")}〜${x.to.slice(5).replace("-","/")}）</div>
+      </div>
+      <button class="bulk-del" onclick="delAllOf('${x.member_id}','${esc(x.text).replace(/'/g,"\\'")}',${x.n})">削除</button>
+    </div>`;
+  }).join("");
+}
+
+async function delAllOf(memberId, text, n){
+  const m = members.find(y=>y.id===memberId) || {};
+  if(!confirm(`${m.name||""}の「${text}」を ${n}日分すべて削除します。よろしいですか？`)) return;
+  const { data } = await sb.from("tasks").select("id")
+    .eq("member_id", memberId).eq("text", text).gte("sort_order", 900);
+  const ids = (data||[]).map(x=>x.id);
+  for(let i=0;i<ids.length;i+=100){
+    await sb.from("tasks").delete().in("id", ids.slice(i,i+100));
+  }
+  tasks = tasks.filter(x=>!ids.includes(x.id));
+  renderTop(); renderMine();
+  alert(`${ids.length}日分を削除しました`);
 }
 
 async function saveRecord(ds, field, value){
