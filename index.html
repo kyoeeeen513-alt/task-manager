@@ -16,11 +16,11 @@
   :root{
     --bg:#f0f5f9; --panel:#fff; --panel2:#f5f9fc; --line:#e3ecf3; --line2:#eff5f9;
     --ink:#152838; --ink2:#3b5468; --sub:#7a92a6;
-    --accent:#2f8fd6; --accent-dark:#1d72b4; --accent-soft:#e6f2fc;
-    --green:#2eb489; --green-soft:#e2f7f0;
-    --orange:#f0973c; --orange-soft:#fff3e4;
-    --red:#e2705f;
-    --c-me:#2f8fd6; --c-mom:#f2833f; --c-sis:#8a6fd6;
+    --accent:#3a7ca8; --accent-dark:#2b6288; --accent-soft:#e9f1f7;
+    --green:#3e9e7f; --green-soft:#e8f4f0;
+    --orange:#c98a4b; --orange-soft:#f7efe4;
+    --red:#c26a5c;
+    --c-me:#3a7ca8; --c-mom:#c98a4b; --c-sis:#7b6a9e;
     --r:18px; --r2:13px;
     --sh:0 2px 10px rgba(20,60,95,.07);
     --sh2:0 10px 28px rgba(20,60,95,.14);
@@ -78,7 +78,7 @@
     font-size:15px; font-weight:900; background:var(--panel2); color:var(--sub);
     border:2px solid transparent; transition:.18s;
   }
-  .daysw button.on{background:var(--accent); color:#fff; box-shadow:0 6px 16px rgba(47,143,214,.32);}
+  .daysw button.on{background:var(--accent); color:#fff; }
   .daysw button small{display:block; font-size:10.5px; font-weight:700; opacity:.8; margin-top:1px;}
 
   /* ========== ボード ========== */
@@ -100,9 +100,9 @@
     padding:11px 6px 9px; text-align:center; color:#fff;
     display:flex; flex-direction:column; align-items:center; gap:5px;
   }
-  .col.me   .col-head{background:linear-gradient(135deg,#2f8fd6,#57b4ec);}
-  .col.mom  .col-head{background:linear-gradient(135deg,#f2833f,#f7a86b);}
-  .col.sis  .col-head{background:linear-gradient(135deg,#8a6fd6,#a892e6);}
+  .col.me   .col-head{background:var(--c-me);}
+  .col.mom  .col-head{background:var(--c-mom);}
+  .col.sis  .col-head{background:var(--c-sis);}
   .col-head img{width:44px; height:44px; border-radius:50%; object-fit:cover;
     border:3px solid rgba(255,255,255,.85);}
   .col-name{font-size:14px; font-weight:900;}
@@ -156,10 +156,10 @@
   .addbig{
     position:fixed; left:50%; transform:translateX(-50%);
     bottom:calc(76px + env(safe-area-inset-bottom));
-    background:linear-gradient(135deg,#2f8fd6,#4aa8e6); color:#fff;
+    background:var(--accent); color:#fff;
     border:none; border-radius:999px; padding:15px 30px;
     font-size:16.5px; font-weight:900; z-index:45;
-    box-shadow:0 10px 26px rgba(47,143,214,.45);
+    box-shadow:0 8px 20px rgba(58,124,168,.4);
     display:flex; align-items:center; gap:8px; white-space:nowrap;
   }
   .addbig:active{transform:translateX(-50%) scale(.95);}
@@ -246,6 +246,7 @@
   .tp-l{font-size:12.5px; font-weight:900; color:var(--sub); margin-bottom:8px;
     display:flex; align-items:center; gap:8px;}
   .tp-l b{font-size:17px; color:var(--accent-dark);}
+  .tp-none{font-size:12.5px; color:#b5c6d3; font-weight:800;}
   .tp-clr{margin-left:auto; background:#fff; border:1.5px solid var(--line);
     border-radius:8px; padding:4px 11px; font-size:11.5px; font-weight:800;
     color:var(--sub);}
@@ -261,9 +262,9 @@
   .sh-row .sh-input{margin:0;}
   .sh-lbl{font-size:13px; font-weight:900; color:var(--sub); margin:0 0 8px;}
   .sh-btn{
-    width:100%; background:linear-gradient(135deg,#2f8fd6,#4aa8e6); color:#fff;
+    width:100%; background:var(--accent); color:#fff;
     border:none; border-radius:16px; padding:17px; font-size:17px; font-weight:900;
-    box-shadow:0 8px 22px rgba(47,143,214,.4); margin-top:4px;
+    box-shadow:0 6px 16px rgba(58,124,168,.32); margin-top:4px;
   }
   .sh-btn:active{transform:scale(.97);}
   .sh-btn.sub{background:none; color:var(--sub); box-shadow:none; font-size:14.5px;
@@ -281,7 +282,7 @@
     border:none; border-radius:16px; padding:17px; font-size:16.5px; font-weight:900;
     display:flex; align-items:center; justify-content:center; gap:9px;
   }
-  .det-b.done{background:var(--green); color:#fff; box-shadow:0 8px 20px rgba(46,180,137,.35);}
+  .det-b.done{background:var(--green); color:#fff;}
   .det-b.undone{background:var(--panel2); color:var(--ink2); border:2px solid var(--line);}
   .det-b.rest{background:var(--orange-soft); color:#b8722c; border:2px solid #f6d6ac;}
   .det-b.edit{background:var(--accent-soft); color:var(--accent-dark);
@@ -360,12 +361,12 @@
   .mine-ttl{font-size:15px; font-weight:900; margin:0 0 14px;
     display:flex; align-items:center; gap:7px;}
   .mine-ttl small{font-size:11.5px; color:var(--sub); font-weight:700; margin-left:auto;}
-  .pace-box{background:linear-gradient(135deg,#eaf4fd,#f4faff); border:1px solid #d5e8f7;
+  .pace-box{background:var(--accent-soft); border:1px solid #d7e5ef;
     border-radius:var(--r2); padding:14px 15px; margin-bottom:12px;}
   .pace-msg{font-size:13px; font-weight:800; color:var(--ink2);}
   .pace-msg b{font-size:19px; font-weight:900; color:var(--accent-dark);}
   .pace-bar{height:8px; background:#d9e9f6; border-radius:99px; margin-top:10px; overflow:hidden;}
-  .pace-fill{height:100%; background:linear-gradient(90deg,var(--accent),#68bdf0);
+  .pace-fill{height:100%; background:var(--accent);
     border-radius:99px; transition:width .35s;}
   .goal-strip{display:flex; gap:9px;}
   .goal-card{flex:1; min-width:0; background:var(--panel2); border:1px solid var(--line);
@@ -414,6 +415,19 @@
     border-radius:10px; padding:9px 15px; font-size:13.5px; font-weight:900;
     flex-shrink:0;}
   .bulk-del:active{transform:scale(.94);}
+  .rec-sub{font-size:12px; font-weight:900; color:var(--sub); letter-spacing:.08em;
+    margin:18px 0 4px; padding-top:12px; border-top:1px solid var(--line2);}
+  .pay-row{display:flex; align-items:center; justify-content:space-between;
+    padding:11px 2px; border-bottom:1px solid var(--line2); gap:12px;}
+  .pay-row:last-child{border-bottom:none;}
+  .pay-n{font-size:14px; font-weight:900;}
+  .pay-d{font-size:12.5px; color:var(--sub); font-weight:800; text-align:right;}
+  .bulk-all{
+    width:100%; background:#fdf0ee; border:2px solid #eec6be; color:var(--red);
+    border-radius:12px; padding:13px; font-size:14px; font-weight:900;
+    margin-bottom:12px;
+  }
+  .bulk-all:active{transform:scale(.97);}
   .rec-hint{font-size:12px; color:var(--sub); margin-top:8px; font-weight:700;}
   .ramen-row{display:flex; align-items:center; gap:12px; background:var(--panel2);
     border:2px solid var(--line); border-radius:var(--r2); padding:14px; margin-top:12px;}
@@ -638,7 +652,6 @@ const CAT_META = {
 };
 
 const DEFAULT_TASKS_KYOSUKE = [
-  {cat:"daily",  text:"ランニング",                   st:"07:00", et:"07:30"},
   {cat:"daily",  text:"洗濯",                         st:"07:30", et:"08:30"},
   {cat:"nomigo", text:"Nomi Go事業",                  st:"08:30", et:"11:30"},
   {cat:"uber",   text:"Uber稼働",                     st:"12:00", et:"14:00"},
@@ -760,7 +773,7 @@ function sortByTime(a,b){
 }
 function getRecordDs(id, ds){
   return records.find(x=>x.member_id===id && x.record_date===ds)
-    || {uber_sales:0, eigyou_self:0, eigyou_team:0, ramen_shift:false};
+    || {uber_sales:0, demaecan_sales:0, rocketnow_sales:0, eigyou_self:0, eigyou_team:0, ramen_shift:false};
 }
 function esc(s){ const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
 
@@ -1008,22 +1021,55 @@ function celebCheck(t, phase, before){
 const HOURS = [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23];
 const MINS  = ["00","15","30","45"];
 
-function timePad(cur, onPick, label){
+function timePad(cur, key, label){
   const h = cur ? Number(cur.slice(0,2)) : null;
   const mi = cur ? cur.slice(3,5) : null;
   return `<div class="tp">
-    <div class="tp-l">${label}${cur?`<b>${cur}</b>`:""}
-      ${cur?`<button class="tp-clr" onclick="${onPick}(null)">消す</button>`:""}</div>
+    <div class="tp-l">${label}${cur?`<b>${cur}</b>`:'<span class="tp-none">未設定</span>'}
+      ${cur?`<button class="tp-clr" data-tp="${key}" data-v="">消す</button>`:""}</div>
     <div class="tp-h">
-      ${HOURS.map(x=>`<button class="tp-b ${h===x?'on':''}"
-        onclick="${onPick}('${String(x).padStart(2,'0')}:${mi||'00'}')">${x}</button>`).join("")}
+      ${HOURS.map(x=>`<button class="tp-b ${h===x?'on':''}" data-tp="${key}"
+        data-v="${String(x).padStart(2,'0')}:${mi||'00'}">${x}</button>`).join("")}
     </div>
     ${h!==null?`<div class="tp-m">
-      ${MINS.map(x=>`<button class="tp-b m ${mi===x?'on':''}"
-        onclick="${onPick}('${String(h).padStart(2,'0')}:${x}')">${x}分</button>`).join("")}
+      ${MINS.map(x=>`<button class="tp-b m ${mi===x?'on':''}" data-tp="${key}"
+        data-v="${String(h).padStart(2,'0')}:${x}">${x}分</button>`).join("")}
     </div>`:""}
   </div>`;
 }
+
+// まとめて削除ボタン
+document.addEventListener("click", function(ev){
+  const b = ev.target.closest("[data-bulk]");
+  if(!b) return;
+  ev.preventDefault();
+  const x = BULK_LIST[Number(b.dataset.bulk)];
+  if(x) delAllOf(x.member_id, x.text, x.n);
+});
+
+// 予定名ボタンのクリック
+let PRE_ADD = [], PRE_ED = [];
+document.addEventListener("click", function(ev){
+  const b = ev.target.closest("[data-pre]");
+  if(!b) return;
+  ev.preventDefault();
+  const i = Number(b.dataset.i);
+  if(b.dataset.pre === "add") pickWhat(PRE_ADD[i]);
+  else edSet("text", PRE_ED[i]);
+});
+
+// 時間ボタンのクリックをまとめて受ける
+document.addEventListener("click", function(ev){
+  const b = ev.target.closest("[data-tp]");
+  if(!b) return;
+  ev.preventDefault();
+  const key = b.dataset.tp;
+  const v = b.dataset.v || null;
+  if(key === "addSt") setSt(v);
+  else if(key === "addEt") setEt(v);
+  else if(key === "edSt") edSetSt(v);
+  else if(key === "edEt") edSetEt(v);
+});
 
 /* ================= 予定を編集する ================= */
 let editState = null;
@@ -1047,6 +1093,7 @@ function openEdit(id){
 function editDraw(){
   const e = editState;
   const pre = [...new Set((PRESETS[e.member]||[]).concat(PRESETS.common))];
+  PRE_ED = pre;
   const d = new Date(e.date+"T00:00:00");
 
   openSheet(`
@@ -1064,8 +1111,8 @@ function editDraw(){
 
     <div class="sh-lbl">内容</div>
     <div class="chips">
-      ${pre.map(p=>`<button class="chip ${e.text===p?'on':''}"
-        onclick="edSet('text','${esc(p)}')">${esc(p)}</button>`).join("")}
+      ${pre.map((p,i)=>`<button class="chip ${e.text===p?'on':''}"
+        data-pre="ed" data-i="${i}">${esc(p)}</button>`).join("")}
     </div>
     <input class="sh-input" id="edText" value="${esc(e.text)}"
       placeholder="内容を入力" onchange="edSetText(this.value)">
@@ -1097,8 +1144,8 @@ function editDraw(){
         onclick="edSlot('${x.k}')">${x.ico} ${x.label}</button>`).join("")}
     </div>
     <div class="sh-lbl">時間を指定する（任意）</div>
-    ${timePad(e.st, "edSetSt", "開始 ")}
-    ${e.st ? timePad(e.et, "edSetEt", "終了 ") : ""}
+    ${timePad(e.st, "edSt", "開始 ")}
+    ${e.st ? timePad(e.et, "edEt", "終了 ") : ""}
 
     <div class="sh-lbl">この日だけ / 連日</div>
     <div class="chips">
@@ -1263,13 +1310,14 @@ function pickWho(id){ addState.member = id; stepWhat(); }
 function stepWhat(){
   const pre = (PRESETS[addState.member] || []).concat(PRESETS.common);
   const uniq = [...new Set(pre)];
+  PRE_ADD = uniq;
   openSheet(`
     <button class="sh-back" onclick="stepWho()">‹ 戻る</button>
     <div class="sh-step">STEP 2 / 3</div>
     <div class="sh-q">何をする？</div>
     <div class="chips">
-      ${uniq.map(p=>`<button class="chip big ${addState.text===p?'on':''}"
-        onclick="pickWhat('${esc(p)}')">${esc(p)}</button>`).join("")}
+      ${uniq.map((p,i)=>`<button class="chip big ${addState.text===p?'on':''}"
+        data-pre="add" data-i="${i}">${esc(p)}</button>`).join("")}
     </div>
     <div class="sh-lbl">自由に入力</div>
     <input class="sh-input" id="freeText" placeholder="例：〇〇に行く"
@@ -1312,8 +1360,8 @@ function stepWhen(){
         onclick="pickSlot('${s.k}')">${s.ico} ${s.label}</button>`).join("")}
     </div>
     <div class="sh-lbl">時間を指定する（任意）</div>
-    ${timePad(addState.st, "setSt", "開始 ")}
-    ${addState.st ? timePad(addState.et, "setEt", "終了 ") : ""}
+    ${timePad(addState.st, "addSt", "開始 ")}
+    ${addState.st ? timePad(addState.et, "addEt", "終了 ") : ""}
     <div class="sh-lbl">この日だけ / 連日</div>
     <div class="chips">
       <button class="chip big ${addState.repeat==='once'?'on':''}" onclick="pickRep('once')">この日だけ</button>
@@ -1622,7 +1670,10 @@ function renderMine(){
   let uber=0,self=0,team=0;
   records.filter(r=>r.member_id==="kyosuke" &&
       r.record_date.startsWith(`${YEAR}-${String(MONTH+1).padStart(2,"0")}`))
-    .forEach(r=>{ uber+=r.uber_sales; self+=r.eigyou_self; team+=r.eigyou_team; });
+    .forEach(r=>{
+      uber += (r.uber_sales||0) + (r.demaecan_sales||0) + (r.rocketnow_sales||0);
+      self += r.eigyou_self; team += r.eigyou_team;
+    });
   const ey = self*EIGYOU_SELF_YEN + team*EIGYOU_TEAM_YEN;
   const goalAll = g.uber+g.eigyou, actAll = uber+ey;
   const left = daysLeft();
@@ -1639,7 +1690,8 @@ function renderMine(){
   const ds = recDate;
   const rec = getRecordDs("kyosuke", ds);
   const rd = new Date(ds+"T00:00:00");
-  const dayYen = rec.uber_sales + rec.eigyou_self*EIGYOU_SELF_YEN + rec.eigyou_team*EIGYOU_TEAM_YEN;
+  const dayYen = (rec.uber_sales||0) + (rec.demaecan_sales||0) + (rec.rocketnow_sales||0)
+    + rec.eigyou_self*EIGYOU_SELF_YEN + rec.eigyou_team*EIGYOU_TEAM_YEN;
 
   let html = `
   <div class="mine-sec">
@@ -1649,7 +1701,7 @@ function renderMine(){
       <div class="pace-bar"><div class="pace-fill" style="width:${pct}%"></div></div>
     </div>
     <div class="goal-strip">
-      <div class="goal-card uber"><div class="label">Uber</div>
+      <div class="goal-card uber"><div class="label">デリバリー</div>
         <div class="value">¥${g.uber.toLocaleString()}</div>
         <div class="sub">実績 ¥${uber.toLocaleString()}</div>
         ${remainHtml(g.uber,uber)}
@@ -1687,11 +1739,25 @@ function renderMine(){
       ${ds !== (td>0?dateStr(td):"") ? `<button class="chip" style="margin-top:8px"
         onclick="setRecDate('${td>0?dateStr(td):dateStr(1)}')">今日に戻す</button>` : ""}
     </div>
+
+    <div class="rec-sub">デリバリー</div>
     <div class="rec-row">
-      <label class="rec-lbl">Uber 売上（円）</label>
+      <label class="rec-lbl">Uber Eats</label>
       <input type="number" inputmode="numeric" class="rec-in" value="${rec.uber_sales||''}"
-        placeholder="例：5000" onchange="saveRecord('${ds}','uber_sales',this.value)">
+        placeholder="0" onchange="saveRecord('${ds}','uber_sales',this.value)">
     </div>
+    <div class="rec-row">
+      <label class="rec-lbl">出前館</label>
+      <input type="number" inputmode="numeric" class="rec-in" value="${rec.demaecan_sales||''}"
+        placeholder="0" onchange="saveRecord('${ds}','demaecan_sales',this.value)">
+    </div>
+    <div class="rec-row">
+      <label class="rec-lbl">ロケットナウ</label>
+      <input type="number" inputmode="numeric" class="rec-in" value="${rec.rocketnow_sales||''}"
+        placeholder="0" onchange="saveRecord('${ds}','rocketnow_sales',this.value)">
+    </div>
+
+    <div class="rec-sub">営業代行</div>
     <div class="rec-row two">
       <div><label class="rec-lbl">自分の成約</label>
         <input type="number" inputmode="numeric" class="rec-in" value="${rec.eigyou_self||''}"
@@ -1701,6 +1767,7 @@ function renderMine(){
           placeholder="0" onchange="saveRecord('${ds}','eigyou_team',this.value)"></div>
     </div>
     <div class="rec-hint">この日の合計：¥${dayYen.toLocaleString()}</div>
+
     <div class="ramen-row ${rec.ramen_shift?'on':''}" onclick="toggleRamen('${ds}')">
       <div class="ramen-ico">🍜</div>
       <div class="ramen-txt">
@@ -1709,6 +1776,14 @@ function renderMine(){
       </div>
       <div class="ramen-sw ${rec.ramen_shift?'on':''}"><span></span></div>
     </div>
+  </div>
+
+  <div class="mine-sec">
+    <div class="mine-ttl">💳 入金サイクル</div>
+    <div class="pay-row"><span class="pay-n">Uber Eats</span><span class="pay-d">毎週 水曜日</span></div>
+    <div class="pay-row"><span class="pay-n">ロケットナウ</span><span class="pay-d">毎週 月曜日</span></div>
+    <div class="pay-row"><span class="pay-n">出前館</span><span class="pay-d">毎月15日 / 月末から5営業日以内</span></div>
+    <div class="pay-row"><span class="pay-n">営業代行</span><span class="pay-d">毎月10日（土日は翌営業日）</span></div>
   </div>`;
 
   // 家族の達成率
@@ -1745,7 +1820,8 @@ function renderMine(){
   const dailyYen = [];
   for(let d=1; d<=DAYS_IN_MONTH; d++){
     const r = getRecordDs("kyosuke", dateStr(d));
-    dailyYen.push(r.uber_sales + r.eigyou_self*EIGYOU_SELF_YEN + r.eigyou_team*EIGYOU_TEAM_YEN);
+    dailyYen.push((r.uber_sales||0)+(r.demaecan_sales||0)+(r.rocketnow_sales||0)
+      + r.eigyou_self*EIGYOU_SELF_YEN + r.eigyou_team*EIGYOU_TEAM_YEN);
   }
   const maxY = Math.max(...dailyYen,1);
   html += `<div class="mine-sec">
@@ -1783,6 +1859,7 @@ function shiftRec(diff){
 }
 
 // 繰り返し予定の一覧を出して、種類ごとに一括削除
+let BULK_LIST = [];
 async function loadBulkList(){
   const el = document.getElementById("bulkList");
   if(!el) return;
@@ -1803,7 +1880,11 @@ async function loadBulkList(){
     el.innerHTML = `<div class="rec-hint">くり返しの予定はありません</div>`;
     return;
   }
-  el.innerHTML = list.map(x=>{
+  BULK_LIST = list;
+  const totalN = list.reduce((a,b)=>a+b.n,0);
+  el.innerHTML = `<button class="bulk-all" onclick="delAllRepeats()">
+      くり返しの予定を全部消す（${list.length}種類・${totalN}日分）
+    </button>` + list.map((x,i)=>{
     const m = members.find(y=>y.id===x.member_id) || {};
     return `<div class="bulk-row">
       <img src="${IMG[x.member_id]}" class="bulk-face">
@@ -1811,9 +1892,29 @@ async function loadBulkList(){
         <div class="bulk-t">${esc(x.text)}</div>
         <div class="bulk-s">${esc(m.name||"")}・${x.n}日分（${x.from.slice(5).replace("-","/")}〜${x.to.slice(5).replace("-","/")}）</div>
       </div>
-      <button class="bulk-del" onclick="delAllOf('${x.member_id}','${esc(x.text).replace(/'/g,"\\'")}',${x.n})">削除</button>
+      <button class="bulk-del" data-bulk="${i}">削除</button>
     </div>`;
   }).join("");
+}
+
+async function delAllRepeats(){
+  const totalN = BULK_LIST.reduce((a,b)=>a+b.n,0);
+  if(!BULK_LIST.length) return;
+  if(!confirm(`くり返しで入っている予定を全部（${BULK_LIST.length}種類・${totalN}日分）削除します。\nこの操作は元に戻せません。よろしいですか？`)) return;
+  if(!confirm("本当に削除しますか？")) return;
+
+  let all = [];
+  for(const x of BULK_LIST){
+    const { data } = await sb.from("tasks").select("id")
+      .eq("member_id", x.member_id).eq("text", x.text).gte("sort_order", 900);
+    all = all.concat((data||[]).map(y=>y.id));
+  }
+  for(let i=0;i<all.length;i+=100){
+    await sb.from("tasks").delete().in("id", all.slice(i,i+100));
+  }
+  tasks = tasks.filter(x=>!all.includes(x.id));
+  renderTop(); renderMine();
+  alert(`${all.length}件を削除しました`);
 }
 
 async function delAllOf(memberId, text, n){
@@ -1830,28 +1931,32 @@ async function delAllOf(memberId, text, n){
   alert(`${ids.length}日分を削除しました`);
 }
 
+function recPayload(r){
+  return {
+    member_id:"kyosuke", record_date:r.record_date,
+    uber_sales:r.uber_sales||0, demaecan_sales:r.demaecan_sales||0,
+    rocketnow_sales:r.rocketnow_sales||0,
+    eigyou_self:r.eigyou_self||0, eigyou_team:r.eigyou_team||0,
+    ramen_shift:!!r.ramen_shift
+  };
+}
+
 async function saveRecord(ds, field, value){
   const v = parseInt(value)||0;
   let r = records.find(x=>x.member_id==="kyosuke" && x.record_date===ds);
-  if(!r){ r = {member_id:"kyosuke", record_date:ds, uber_sales:0, eigyou_self:0,
-    eigyou_team:0, ramen_shift:false}; records.push(r); }
+  if(!r){ r = {member_id:"kyosuke", record_date:ds, uber_sales:0, demaecan_sales:0,
+    rocketnow_sales:0, eigyou_self:0, eigyou_team:0, ramen_shift:false}; records.push(r); }
   r[field] = v;
   renderMine();
-  await sb.from("daily_records").upsert({
-    member_id:"kyosuke", record_date:ds, uber_sales:r.uber_sales,
-    eigyou_self:r.eigyou_self, eigyou_team:r.eigyou_team, ramen_shift:!!r.ramen_shift
-  }, {onConflict:"member_id,record_date"});
+  await sb.from("daily_records").upsert(recPayload(r), {onConflict:"member_id,record_date"});
 }
 async function toggleRamen(ds){
   let r = records.find(x=>x.member_id==="kyosuke" && x.record_date===ds);
-  if(!r){ r = {member_id:"kyosuke", record_date:ds, uber_sales:0, eigyou_self:0,
-    eigyou_team:0, ramen_shift:false}; records.push(r); }
+  if(!r){ r = {member_id:"kyosuke", record_date:ds, uber_sales:0, demaecan_sales:0,
+    rocketnow_sales:0, eigyou_self:0, eigyou_team:0, ramen_shift:false}; records.push(r); }
   r.ramen_shift = !r.ramen_shift;
   renderMine(); renderTop();
-  await sb.from("daily_records").upsert({
-    member_id:"kyosuke", record_date:ds, uber_sales:r.uber_sales,
-    eigyou_self:r.eigyou_self, eigyou_team:r.eigyou_team, ramen_shift:r.ramen_shift
-  }, {onConflict:"member_id,record_date"});
+  await sb.from("daily_records").upsert(recPayload(r), {onConflict:"member_id,record_date"});
 }
 
 /* ================= お祝いポップアップ ================= */
