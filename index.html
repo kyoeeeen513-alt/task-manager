@@ -773,7 +773,7 @@ function sortByTime(a,b){
 }
 function getRecordDs(id, ds){
   return records.find(x=>x.member_id===id && x.record_date===ds)
-    || {uber_sales:0, demaecan_sales:0, rocketnow_sales:0, eigyou_self:0, eigyou_team:0, ramen_shift:false};
+    || {uber_sales:0, demaecan_sales:0, rocketnow_sales:0, eigyou_amount:0, eigyou_self:0, eigyou_team:0, ramen_shift:false};
 }
 function esc(s){ const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
 
@@ -1667,14 +1667,13 @@ function perDay(remain, left){
 }
 function renderMine(){
   const g = GOALS.kyosuke;
-  let uber=0,self=0,team=0;
+  let uber=0, ey=0;
   records.filter(r=>r.member_id==="kyosuke" &&
       r.record_date.startsWith(`${YEAR}-${String(MONTH+1).padStart(2,"0")}`))
     .forEach(r=>{
       uber += (r.uber_sales||0) + (r.demaecan_sales||0) + (r.rocketnow_sales||0);
-      self += r.eigyou_self; team += r.eigyou_team;
+      ey += (r.eigyou_amount||0);
     });
-  const ey = self*EIGYOU_SELF_YEN + team*EIGYOU_TEAM_YEN;
   const goalAll = g.uber+g.eigyou, actAll = uber+ey;
   const left = daysLeft();
   const pct = goalAll ? Math.min(Math.round(actAll/goalAll*100),100) : 0;
@@ -1691,7 +1690,7 @@ function renderMine(){
   const rec = getRecordDs("kyosuke", ds);
   const rd = new Date(ds+"T00:00:00");
   const dayYen = (rec.uber_sales||0) + (rec.demaecan_sales||0) + (rec.rocketnow_sales||0)
-    + rec.eigyou_self*EIGYOU_SELF_YEN + rec.eigyou_team*EIGYOU_TEAM_YEN;
+    + (rec.eigyou_amount||0);
 
   let html = `
   <div class="mine-sec">
@@ -1708,7 +1707,7 @@ function renderMine(){
         <div class="sub pace">1日 ¥${perDay(g.uber-uber,left).toLocaleString()}</div></div>
       <div class="goal-card eigyou"><div class="label">営業代行</div>
         <div class="value">¥${g.eigyou.toLocaleString()}</div>
-        <div class="sub">${self+team}件・¥${ey.toLocaleString()}</div>
+        <div class="sub">実績 ¥${ey.toLocaleString()}</div>
         ${remainHtml(g.eigyou,ey)}
         <div class="sub pace">1日 ¥${perDay(g.eigyou-ey,left).toLocaleString()}</div></div>
       <div class="goal-card total"><div class="label">合計</div>
@@ -1758,13 +1757,13 @@ function renderMine(){
     </div>
 
     <div class="rec-sub">営業代行</div>
-    <div class="rec-row two">
-      <div><label class="rec-lbl">自分の成約</label>
-        <input type="number" inputmode="numeric" class="rec-in" value="${rec.eigyou_self||''}"
-          placeholder="0" onchange="saveRecord('${ds}','eigyou_self',this.value)"></div>
-      <div><label class="rec-lbl">下の人の成約</label>
-        <input type="number" inputmode="numeric" class="rec-in" value="${rec.eigyou_team||''}"
-          placeholder="0" onchange="saveRecord('${ds}','eigyou_team',this.value)"></div>
+    <div class="rec-row">
+      <label class="rec-lbl">売上（円）</label>
+      <input type="number" inputmode="numeric" class="rec-in" value="${rec.eigyou_amount||''}"
+        placeholder="0" onchange="saveRecord('${ds}','eigyou_amount',this.value)">
+      <div class="rec-hint" style="margin-top:6px">
+        自分の成約 1件＝8,000円／下の人 1件＝3,000円
+      </div>
     </div>
     <div class="rec-hint">この日の合計：¥${dayYen.toLocaleString()}</div>
 
@@ -1821,7 +1820,7 @@ function renderMine(){
   for(let d=1; d<=DAYS_IN_MONTH; d++){
     const r = getRecordDs("kyosuke", dateStr(d));
     dailyYen.push((r.uber_sales||0)+(r.demaecan_sales||0)+(r.rocketnow_sales||0)
-      + r.eigyou_self*EIGYOU_SELF_YEN + r.eigyou_team*EIGYOU_TEAM_YEN);
+      + (r.eigyou_amount||0));
   }
   const maxY = Math.max(...dailyYen,1);
   html += `<div class="mine-sec">
@@ -1936,6 +1935,7 @@ function recPayload(r){
     member_id:"kyosuke", record_date:r.record_date,
     uber_sales:r.uber_sales||0, demaecan_sales:r.demaecan_sales||0,
     rocketnow_sales:r.rocketnow_sales||0,
+    eigyou_amount:r.eigyou_amount||0,
     eigyou_self:r.eigyou_self||0, eigyou_team:r.eigyou_team||0,
     ramen_shift:!!r.ramen_shift
   };
@@ -1945,7 +1945,7 @@ async function saveRecord(ds, field, value){
   const v = parseInt(value)||0;
   let r = records.find(x=>x.member_id==="kyosuke" && x.record_date===ds);
   if(!r){ r = {member_id:"kyosuke", record_date:ds, uber_sales:0, demaecan_sales:0,
-    rocketnow_sales:0, eigyou_self:0, eigyou_team:0, ramen_shift:false}; records.push(r); }
+    rocketnow_sales:0, eigyou_amount:0, eigyou_self:0, eigyou_team:0, ramen_shift:false}; records.push(r); }
   r[field] = v;
   renderMine();
   await sb.from("daily_records").upsert(recPayload(r), {onConflict:"member_id,record_date"});
@@ -1953,7 +1953,7 @@ async function saveRecord(ds, field, value){
 async function toggleRamen(ds){
   let r = records.find(x=>x.member_id==="kyosuke" && x.record_date===ds);
   if(!r){ r = {member_id:"kyosuke", record_date:ds, uber_sales:0, demaecan_sales:0,
-    rocketnow_sales:0, eigyou_self:0, eigyou_team:0, ramen_shift:false}; records.push(r); }
+    rocketnow_sales:0, eigyou_amount:0, eigyou_self:0, eigyou_team:0, ramen_shift:false}; records.push(r); }
   r.ramen_shift = !r.ramen_shift;
   renderMine(); renderTop();
   await sb.from("daily_records").upsert(recPayload(r), {onConflict:"member_id,record_date"});
